@@ -26,6 +26,9 @@ Thumbs.db
 .vscode/
 .idea/
 
+# Orchestrator state (resumable pipeline progress + log)
+.phase0/
+
 # Venv
 .venv/
 venv/
