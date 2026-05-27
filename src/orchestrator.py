@@ -287,15 +287,96 @@ def _stage_backfill_options() -> StageFn:
     )
 
 
+def _stage_score_sentiment() -> StageFn:
+    """Score each month's news with FinBERT once ``backfill_news`` has marked
+    that month complete. FinBERT is loaded once and cached in
+    ``src.sentiment`` module scope across orchestrator iterations."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "score_sentiment")
+        chunks = stage_state["chunks"]
+        news_chunks = state.get("stages", {}).get("backfill_news", {}).get("chunks", {})
+
+        for month in _all_locked_months():
+            if chunks.get(month, {}).get("status") == "complete":
+                continue
+            news_chunk = news_chunks.get(month, {})
+            if news_chunk.get("status") != "complete":
+                # News not yet pulled for this month; check the next month.
+                # If every pending sentiment month is waiting on news, we'll
+                # exit the loop with did_work=False and the orchestrator
+                # sleeps before retrying.
+                continue
+            if news_chunk.get("rows", 0) == 0:
+                chunks[month] = {
+                    "status": "complete",
+                    "rows": 0,
+                    "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                    "note": "no news rows for this month; nothing to score",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"score_sentiment {month} (no news; skipped)"
+                )
+
+            try:
+                from src.sentiment import score_parquet  # lazy
+
+                data_root = repo_root / "data"
+                total_rows = 0
+                wrote_any = False
+                for split in ("train", "validation", "holdout"):
+                    news_path = data_root / split / "news" / f"{month}.parquet"
+                    sentiment_path = data_root / split / "sentiment" / f"{month}.parquet"
+                    if not news_path.exists():
+                        continue
+                    if sentiment_path.exists():
+                        # Already scored (resume across restarts).
+                        continue
+                    results = score_parquet(
+                        news_path, out_source="sentiment", data_root=data_root
+                    )
+                    for r in results:
+                        total_rows += r.row_count
+                    wrote_any = wrote_any or bool(results)
+
+                chunks[month] = {
+                    "status": "complete",
+                    "rows": total_rows,
+                    "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                    "note": "already scored; skipped" if not wrote_any else "",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"score_sentiment {month} rows={total_rows}"
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("score_sentiment %s failed: %s", month, exc)
+                logger.debug("%s", traceback.format_exc())
+                chunks[month] = {
+                    "status": "failed",
+                    "error": str(exc),
+                    "failed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"score_sentiment {month} FAILED: {exc}"
+                )
+
+        news_state = state.get("stages", {}).get("backfill_news", {})
+        if news_state.get("status") == "complete":
+            stage_state["status"] = "complete"
+        return StageOutcome(did_work=False)
+
+    return stage
+
+
 STAGES: list[tuple[str, StageFn]] = [
     ("backfill_risk_free", _stage_backfill_risk_free()),
     ("backfill_underlying", _stage_backfill_underlying()),
     ("backfill_news", _stage_backfill_news()),
     ("backfill_options", _stage_backfill_options()),
-    ("score_sentiment", _stub_stage(
-        "score_sentiment",
-        "not yet implemented; will live in src/sentiment.py (FinBERT batch scoring)",
-    )),
+    ("score_sentiment", _stage_score_sentiment()),
     ("compute_iv", _stub_stage(
         "compute_iv",
         "not yet implemented; will live in src/iv_surface.py (Black-Scholes inversion)",
