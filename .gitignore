@@ -1,0 +1,31 @@
+# Data — never commit raw vendor data
+data/train/*
+data/validation/*
+data/holdout/*
+!data/*/.gitkeep
+!data/MANIFEST.json
+
+# Secrets
+.env
+.env.local
+*.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Venv
+.venv/
+venv/
+env/
