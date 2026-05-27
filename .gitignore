@@ -2,6 +2,7 @@
 data/train/*
 data/validation/*
 data/holdout/*
+data/_smoke/
 !data/*/.gitkeep
 !data/MANIFEST.json
 

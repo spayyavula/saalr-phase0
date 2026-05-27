@@ -1,6 +1,4 @@
-# Pinned for reproducibility. Python 3.11.
-# Note: `polygon-api-client` may have been renamed on PyPI after the
-# Polygon → Massive rebrand. Verify on Day 1 of Week 2 before pip install.
+# Pinned for reproducibility. Python 3.11 target.
 torch==2.4.1
 transformers==4.45.2
 sentencepiece==0.2.0
@@ -11,7 +9,8 @@ scipy==1.14.1
 statsmodels==0.14.4
 arch==7.1.0
 pyarrow==17.0.0
-polygon-api-client==1.14.5
+polygon-api-client==1.16.3
+requests==2.32.3
 python-dotenv==1.0.1
 matplotlib==3.9.2
 seaborn==0.13.2
