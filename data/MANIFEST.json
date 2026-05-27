@@ -1,0 +1,109 @@
+{
+  "files": {
+    "train/news/2024-01.parquet": {
+      "rows": 2219,
+      "sha256": "2f14f0a2f4a8a41104e4f24fde3220ccf4180c4512edc16db041eb7556a77117",
+      "written_at_utc": "2026-05-27T14:30:30Z"
+    },
+    "train/risk_free/2024-01.parquet": {
+      "rows": 22,
+      "sha256": "cdb3a0249e3b3e9f0e04ac082d6965aff687485fbf7e3524f51429f087b11733",
+      "written_at_utc": "2026-05-27T14:32:31Z"
+    },
+    "train/risk_free/2024-02.parquet": {
+      "rows": 21,
+      "sha256": "ef3328f4a290a13a0156970f8f02d2c949d983deac18253b45fbb5dd5da7de66",
+      "written_at_utc": "2026-05-27T14:32:46Z"
+    },
+    "train/risk_free/2024-03.parquet": {
+      "rows": 21,
+      "sha256": "f86c38da95c9d312a213806ca9dcdeadf90f0dc89a62a840a181f1c2b5ef104b",
+      "written_at_utc": "2026-05-27T14:33:02Z"
+    },
+    "train/risk_free/2024-04.parquet": {
+      "rows": 22,
+      "sha256": "a40af8437dd7e23e56fea7e07f073f6cc949bbfea49e08678f9ad0fad1f9b903",
+      "written_at_utc": "2026-05-27T14:33:18Z"
+    },
+    "train/risk_free/2024-05.parquet": {
+      "rows": 23,
+      "sha256": "57e3814ebfe7e4c157f7892ba3c9460528345efa32be3dddbe21d651e38012b7",
+      "written_at_utc": "2026-05-27T14:33:34Z"
+    },
+    "train/risk_free/2024-06.parquet": {
+      "rows": 20,
+      "sha256": "d75e629d9d7355925631c3d0a90ab6f8aa0d67376458898bcc610ac1e8ade905",
+      "written_at_utc": "2026-05-27T14:33:50Z"
+    },
+    "train/risk_free/2024-07.parquet": {
+      "rows": 23,
+      "sha256": "b1c993289b9999ef68cf7bac05f61a1da25175c7751bd90427db6524b6f0c76c",
+      "written_at_utc": "2026-05-27T14:34:05Z"
+    },
+    "train/risk_free/2024-08.parquet": {
+      "rows": 22,
+      "sha256": "5802a484fab9c53aa02b62d139db571160b1bb8b86d4e7f697f73299251ad13d",
+      "written_at_utc": "2026-05-27T14:34:21Z"
+    },
+    "train/risk_free/2024-09.parquet": {
+      "rows": 20,
+      "sha256": "a7ca02ec103667671100cf2e2932c316325dba1b3d8a5a6b319d9b302da02cf4",
+      "written_at_utc": "2026-05-27T14:34:37Z"
+    },
+    "train/risk_free/2024-10.parquet": {
+      "rows": 23,
+      "sha256": "1728230c345832bb06312572adb070cdbe612904cbfa3ab29576a33be19b91db",
+      "written_at_utc": "2026-05-27T14:34:53Z"
+    },
+    "train/risk_free/2024-11.parquet": {
+      "rows": 21,
+      "sha256": "4b8e181cb4f275972e583615ab7b60cfbd6dedf81ab91c9dd56dbff1834191e8",
+      "written_at_utc": "2026-05-27T14:35:09Z"
+    },
+    "train/risk_free/2024-12.parquet": {
+      "rows": 22,
+      "sha256": "2becaa9c4c9caec82973147b3eece51231040de1d1fa5822cfe85566003db133",
+      "written_at_utc": "2026-05-27T14:35:25Z"
+    },
+    "train/risk_free/2025-01.parquet": {
+      "rows": 22,
+      "sha256": "1b5d058a1e73c434d48449ff50f4b96888c8c9ed9fe764da8a84ae9e0b5769fa",
+      "written_at_utc": "2026-05-27T14:35:41Z"
+    },
+    "train/risk_free/2025-02.parquet": {
+      "rows": 20,
+      "sha256": "0ec33b58c5c227daf50f4902778d0ca29df4f8131eaac53bf2ebb7c0b328c61d",
+      "written_at_utc": "2026-05-27T14:35:57Z"
+    },
+    "train/risk_free/2025-03.parquet": {
+      "rows": 21,
+      "sha256": "f6fb8890d73d908fae8b6794337d1862a3f2afa5ea8ad41380c8bcc2a2adc2b9",
+      "written_at_utc": "2026-05-27T14:36:13Z"
+    },
+    "train/risk_free/2025-04.parquet": {
+      "rows": 22,
+      "sha256": "7ef5a8e7d67dc201ac0d8962104bbae5c59764321fd003ec0c3bc02d23ba1f4a",
+      "written_at_utc": "2026-05-27T14:36:29Z"
+    },
+    "train/risk_free/2025-05.parquet": {
+      "rows": 22,
+      "sha256": "796f62340743b399f59f5aab844bc5ab6aa7dec30eeca92af14955197cf6edd7",
+      "written_at_utc": "2026-05-27T14:36:44Z"
+    },
+    "train/risk_free/2025-06.parquet": {
+      "rows": 21,
+      "sha256": "03f042ffa571d49b60a91d556201dee59434cee30cb911e647b721520836553c",
+      "written_at_utc": "2026-05-27T14:37:00Z"
+    },
+    "train/underlying/2024-01.parquet": {
+      "rows": 16639,
+      "sha256": "e591339db5d6bdb394922c92edcfca231975a0ad8877833a92c95d5ac752dc5e",
+      "written_at_utc": "2026-05-27T14:29:56Z"
+    },
+    "train/underlying/2024-02.parquet": {
+      "rows": 50,
+      "sha256": "4c3190bbef68f91845d5673bc42e237b1a9852943181903fdfa70deae168e060",
+      "written_at_utc": "2026-05-27T14:29:56Z"
+    }
+  }
+}

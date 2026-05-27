@@ -42,6 +42,13 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Callable
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+except ImportError:
+    pass
+
 logger = logging.getLogger("phase0_orchestrator")
 
 STATE_VERSION = 1
@@ -272,8 +279,11 @@ def _stage_backfill_news() -> StageFn:
 def _stage_backfill_options() -> StageFn:
     return _stub_stage(
         "backfill_options",
-        "deferred: see src/options.py module docstring Q1 (strike window) and "
-        "Q2 (mid-quote source). Resolve those decisions and replace this stub.",
+        "stub: Q1/Q2 settled in "
+        "decisions/2026-05-27_q1-strike-window-and-q2-mid-quote.md and "
+        "src/options.py exposes list_contracts_for_ingest + "
+        "fetch_option_mid_quote_at. Wiring the daily-pull + sample-construction "
+        "+ coverage-failure writer is a follow-on commit.",
     )
 
 

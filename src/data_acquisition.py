@@ -65,9 +65,12 @@ def cmd_news(args: argparse.Namespace) -> None:
 
 def cmd_options(args: argparse.Namespace) -> None:
     raise SystemExit(
-        "options ingest is not yet wired end-to-end; see src/options.py "
-        "module docstring Q1 (strike window) and Q2 (mid-quote source). "
-        "Resolve those decisions before running this subcommand."
+        "options ingest is not yet wired end-to-end. The Q1/Q2 decisions are "
+        "settled in decisions/2026-05-27_q1-strike-window-and-q2-mid-quote.md "
+        "and the helpers exist in src/options.py "
+        "(list_contracts_for_ingest, fetch_option_mid_quote_at), but the "
+        "daily-pull + sample-construction + coverage-failure writer is a "
+        "follow-on commit."
     )
 
 
