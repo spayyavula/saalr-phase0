@@ -2,7 +2,7 @@
 
 This repository contains the code, decision log, and journal for **Saalr's Phase 0 signal-validation experiment** — a publicly pre-registered, out-of-sample test of whether FinBERT-derived news sentiment scores carry statistically significant, economically meaningful predictive information about near-term implied-volatility changes in SPY ATM weekly options.
 
-**Public pre-registration:** _Gist URL added immediately after publication on 2026-05-27_
+**Public pre-registration:** https://gist.github.com/spayyavula/2c42dceaf372a839ddc1fb7ceb9e4a04 (filed 2026-05-27)
 
 ## What's public
 
@@ -31,7 +31,7 @@ This repository contains the code, decision log, and journal for **Saalr's Phase
 
 ## Links
 
-- Pre-registration gist: _added immediately after publication_
+- Pre-registration gist: https://gist.github.com/spayyavula/2c42dceaf372a839ddc1fb7ceb9e4a04
 - Saalr: https://saalr.io
 
 ## License
