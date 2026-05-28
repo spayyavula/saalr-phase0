@@ -136,7 +136,11 @@ def sharpe_approx(returns, *, periods_per_year: int = 252) -> float:
     if returns_clean.size < 2:
         return float("nan")
     std = float(returns_clean.std(ddof=1))
-    if std == 0.0:
+    # Tolerance instead of `== 0.0`: numpy's std of a constant array
+    # rounds to ~1e-18, not literally 0, so the strict-equality guard
+    # let through "constant returns" and returned an astronomical Sharpe
+    # (mean / float-noise * sqrt(252)).
+    if std < 1e-12:
         return float("nan")
     mean = float(returns_clean.mean())
     return mean / std * np.sqrt(periods_per_year)
