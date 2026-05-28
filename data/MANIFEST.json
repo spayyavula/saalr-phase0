@@ -168,7 +168,72 @@
     "train/options/2024-01.parquet": {
       "rows": 4334,
       "sha256": "1507e2287ac424c522a89304e6a9691592aa7db4ab44798d33e60c4a4f6574a5",
-      "written_at_utc": "2026-05-28T01:47:06Z"
+      "written_at_utc": "2026-05-28T01:50:41Z"
+    },
+    "train/options/2024-02.parquet": {
+      "rows": 3988,
+      "sha256": "4e3aaabcd6e377ebf642ef05f1210be051ff539eab864d0fdd10f11a1a40bb32",
+      "written_at_utc": "2026-05-28T01:52:01Z"
+    },
+    "train/options/2024-03.parquet": {
+      "rows": 3102,
+      "sha256": "206f4045b308138ab724f84506351b210bea15c63aa6544416fbfeeec1be189d",
+      "written_at_utc": "2026-05-28T01:52:51Z"
+    },
+    "train/options/2024-04.parquet": {
+      "rows": 4632,
+      "sha256": "653f4798cef8f68108a55269e9b4f4004140e058da2ee879d7f9afe68825d4e4",
+      "written_at_utc": "2026-05-28T01:53:44Z"
+    },
+    "train/options/2024-05.parquet": {
+      "rows": 4434,
+      "sha256": "36655960749a0353b1fab9a185c5616981051395e1346346376ab2747f56179f",
+      "written_at_utc": "2026-05-28T01:54:37Z"
+    },
+    "train/options/2024-06.parquet": {
+      "rows": 3776,
+      "sha256": "e964f95ab3dfa85a3bd07ee5afd07900a487a822cb5436f5f13868ae924e06db",
+      "written_at_utc": "2026-05-28T01:55:27Z"
+    },
+    "train/options/2024-07.parquet": {
+      "rows": 4532,
+      "sha256": "3e11f6349f104900c87f54441777d3dec63ddc1e6d9b139d3daac9309bb5a63b",
+      "written_at_utc": "2026-05-28T01:56:19Z"
+    },
+    "train/options/2024-08.parquet": {
+      "rows": 4492,
+      "sha256": "7018a5340fc1b2aa8fc01b3b95e9ecc1a5b18ba625697504032327cf3973765b",
+      "written_at_utc": "2026-05-28T01:57:12Z"
+    },
+    "train/options/2024-09.parquet": {
+      "rows": 4018,
+      "sha256": "1781d8a98cbcb7aba1f049c2b3ccda47a399f7ff7afd903bedf9b41368ac5884",
+      "written_at_utc": "2026-05-28T01:58:03Z"
+    },
+    "train/options/2024-10.parquet": {
+      "rows": 4716,
+      "sha256": "f85953b0ab202c60c1312d5205fc632b6844fe637270ae1a8017a83449deaff0",
+      "written_at_utc": "2026-05-28T01:58:57Z"
+    },
+    "train/options/2024-11.parquet": {
+      "rows": 4022,
+      "sha256": "101b0fa9689189653864a5d9cad0e60b551cb383d5445cb772abc76a7996c05e",
+      "written_at_utc": "2026-05-28T01:59:46Z"
+    },
+    "train/options/2024-12.parquet": {
+      "rows": 4280,
+      "sha256": "6d71f3975d276507a9737b603b195032ffeb721a22baec6e3e5f8eccf2a907c0",
+      "written_at_utc": "2026-05-28T02:00:37Z"
+    },
+    "train/options/2025-01.parquet": {
+      "rows": 4134,
+      "sha256": "5e5225b96e3fbee1b34d1c65a9595bb76d814bec2d4976d7673c43ee778a2ffc",
+      "written_at_utc": "2026-05-28T02:01:26Z"
+    },
+    "train/options/2025-02.parquet": {
+      "rows": 3832,
+      "sha256": "9b4d49b968e9e246f2887c0de44fc3ca7f7b1d5256e3d28abaf35b76168f44a4",
+      "written_at_utc": "2026-05-28T02:02:15Z"
     },
     "train/risk_free/2024-01.parquet": {
       "rows": 22,
