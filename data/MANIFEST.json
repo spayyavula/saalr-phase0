@@ -80,6 +80,31 @@
       "sha256": "51725f9074b6680cbdc6aeb9338d9f32d969ff62b423114dbd883b73e2a2ec54",
       "written_at_utc": "2026-05-28T04:15:39Z"
     },
+    "train/events/2024-02.parquet": {
+      "rows": 504,
+      "sha256": "abaf6fe381214b12dc1e75c94ae016a330f3931dba23a5e7af309b2c40967708",
+      "written_at_utc": "2026-05-28T04:57:55Z"
+    },
+    "train/events/2024-03.parquet": {
+      "rows": 599,
+      "sha256": "dd4d1220db0718f92cc0acb20be0ceef3a7948ac5f4836510a1c1a808a3e6491",
+      "written_at_utc": "2026-05-28T05:24:45Z"
+    },
+    "train/events/2024-04.parquet": {
+      "rows": 615,
+      "sha256": "e237cb4b1d2c853489b4cdc54304885899e86d0508c33acad919112530780bbd",
+      "written_at_utc": "2026-05-28T05:59:02Z"
+    },
+    "train/events/2024-05.parquet": {
+      "rows": 536,
+      "sha256": "16e7e9670ac64c07c6535e2801da68dc0612fcae62f441ff0678df676934c5a9",
+      "written_at_utc": "2026-05-28T06:26:37Z"
+    },
+    "train/events/2024-06.parquet": {
+      "rows": 470,
+      "sha256": "3a037783636814d42375f02040c3c62aea1c6febb46ae0562b8327f814c3c742",
+      "written_at_utc": "2026-05-28T06:52:16Z"
+    },
     "train/news/2024-01.parquet": {
       "rows": 2219,
       "sha256": "2f14f0a2f4a8a41104e4f24fde3220ccf4180c4512edc16db041eb7556a77117",
