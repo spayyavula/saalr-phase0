@@ -121,6 +121,35 @@ def write_partitioned_parquet(
     return results
 
 
+def read_month_across_splits(
+    data_root: Path,
+    source: str,
+    year_month: str,
+):
+    """Return a single ``pd.DataFrame`` containing every ``year_month`` row
+    for ``source`` across all splits.
+
+    Boundary months (currently only ``2026-02``) live in two split
+    directories at once because ``write_partitioned_parquet`` routes per
+    row. Downstream stages that consume a whole month therefore need to
+    union them. Empty if no file exists in any split.
+    """
+    import pandas as pd
+
+    dfs: list = []
+    for split in ("train", "validation", "holdout"):
+        path = data_root / split / source / f"{year_month}.parquet"
+        if path.exists():
+            dfs.append(pd.read_parquet(path))
+    if not dfs:
+        return pd.DataFrame()
+    return (
+        pd.concat(dfs, ignore_index=True)
+        .sort_values("timestamp", kind="stable")
+        .reset_index(drop=True)
+    )
+
+
 def _update_manifest(data_root: Path, results: list[WriteResult]) -> None:
     manifest_path = data_root / "MANIFEST.json"
     if manifest_path.exists():

@@ -277,14 +277,83 @@ def _stage_backfill_news() -> StageFn:
 
 
 def _stage_backfill_options() -> StageFn:
-    return _stub_stage(
-        "backfill_options",
-        "stub: Q1/Q2 settled in "
-        "decisions/2026-05-27_q1-strike-window-and-q2-mid-quote.md and "
-        "src/options.py exposes list_contracts_for_ingest + "
-        "fetch_option_mid_quote_at. Wiring the daily-pull + sample-construction "
-        "+ coverage-failure writer is a follow-on commit.",
-    )
+    """Per-(trading-day, weekly-expiry) contract listing.
+
+    Mid-quote pulls themselves happen later in match_events at exact
+    event sample times (per the Q2 decision). This stage only persists
+    the contract universe per day so the downstream stages don't have
+    to re-list contracts for every event. Gated on backfill_underlying
+    because it needs each day's 09:30-ET open spot as the ingest-window
+    anchor."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "backfill_options")
+        chunks = stage_state["chunks"]
+        underlying_chunks = (
+            state.get("stages", {})
+            .get("backfill_underlying", {})
+            .get("chunks", {})
+        )
+
+        for month in _all_locked_months():
+            if chunks.get(month, {}).get("status") == "complete":
+                continue
+            if underlying_chunks.get(month, {}).get("status") != "complete":
+                continue
+
+            try:
+                from src import storage  # lazy
+                from src.options import fetch_contracts_for_month
+
+                data_root = repo_root / "data"
+                underlying_df = storage.read_month_across_splits(
+                    data_root, "underlying", month
+                )
+                if underlying_df.empty:
+                    chunks[month] = {
+                        "status": "complete",
+                        "rows": 0,
+                        "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                        "note": "no underlying rows for this month; nothing to anchor on",
+                    }
+                    stage_state["status"] = "in_progress"
+                    return StageOutcome(
+                        did_work=True,
+                        message=f"backfill_options {month} (no underlying; skipped)",
+                    )
+
+                df = fetch_contracts_for_month(month, underlying_df)
+                rows = int(getattr(df, "shape", (0,))[0])
+                if rows > 0:
+                    storage.write_partitioned_parquet(df, data_root, "options")
+                chunks[month] = {
+                    "status": "complete",
+                    "rows": rows,
+                    "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"backfill_options {month} rows={rows}"
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("backfill_options %s failed: %s", month, exc)
+                logger.debug("%s", traceback.format_exc())
+                chunks[month] = {
+                    "status": "failed",
+                    "error": str(exc),
+                    "failed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"backfill_options {month} FAILED: {exc}"
+                )
+
+        underlying_state = state.get("stages", {}).get("backfill_underlying", {})
+        if underlying_state.get("status") == "complete":
+            stage_state["status"] = "complete"
+        return StageOutcome(did_work=False)
+
+    return stage
 
 
 def _stage_score_sentiment() -> StageFn:

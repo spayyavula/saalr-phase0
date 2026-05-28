@@ -64,14 +64,22 @@ def cmd_news(args: argparse.Namespace) -> None:
 
 
 def cmd_options(args: argparse.Namespace) -> None:
-    raise SystemExit(
-        "options ingest is not yet wired end-to-end. The Q1/Q2 decisions are "
-        "settled in decisions/2026-05-27_q1-strike-window-and-q2-mid-quote.md "
-        "and the helpers exist in src/options.py "
-        "(list_contracts_for_ingest, fetch_option_mid_quote_at), but the "
-        "daily-pull + sample-construction + coverage-failure writer is a "
-        "follow-on commit."
-    )
+    from datetime import timedelta
+
+    data_root = _data_root()
+    cursor = args.start.replace(day=1)
+    while cursor <= args.end:
+        month = cursor.strftime("%Y-%m")
+        underlying_df = storage.read_month_across_splits(data_root, "underlying", month)
+        if underlying_df.empty:
+            print(f"{month}: no underlying parquet found across splits; skipping")
+        else:
+            df = options.fetch_contracts_for_month(month, underlying_df)
+            if len(df) > 0:
+                _write(df, "options")
+            else:
+                print(f"{month}: no contracts returned")
+        cursor = (cursor.replace(day=28) + timedelta(days=4)).replace(day=1)
 
 
 def cmd_all(args: argparse.Namespace) -> None:

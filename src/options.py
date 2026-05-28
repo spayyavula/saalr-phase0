@@ -24,8 +24,10 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import date, datetime, timedelta, timezone
+import time
+from datetime import date, datetime, time as dtime, timedelta, timezone
 from typing import Iterator, Optional
+from zoneinfo import ZoneInfo
 
 from polygon import RESTClient
 
@@ -36,6 +38,11 @@ logger = logging.getLogger(__name__)
 
 INGEST_STRIKE_HALF_WIDTH: float = 25.0
 MID_QUOTE_WINDOW_SECONDS: int = 30
+EXPIRIES_PER_TRADING_DAY: int = 2
+INTER_CALL_SLEEP_SECONDS: float = 0.2
+_ET = ZoneInfo("America/New_York")
+_RTH_OPEN_ET = dtime(9, 30)
+_RTH_CLOSE_ET = dtime(16, 0)
 
 
 def _client() -> RESTClient:
@@ -161,6 +168,111 @@ def fetch_option_mid_quote_at(
         "spread_pct_of_mid": spread,
         "passes_spread_filter": spread <= SPEC.options_max_spread_pct_of_mid,
     }
+
+
+def _daily_opens_from_underlying(underlying_df) -> dict[date, float]:
+    """For each ET trading day in ``underlying_df``, return the open of the
+    first regular-trading-hours (>= 09:30 ET) bar. Skips days with no RTH
+    data. Pure pandas helper; safe to call without polygon access."""
+    import pandas as pd
+
+    if underlying_df is None or len(underlying_df) == 0:
+        return {}
+
+    ts_utc = pd.to_datetime(underlying_df["timestamp"], utc=True)
+    ts_et = ts_utc.dt.tz_convert(_ET)
+    et_dates = ts_et.dt.date
+    et_times = ts_et.dt.time
+    rth_mask = (et_times >= _RTH_OPEN_ET) & (et_times < _RTH_CLOSE_ET)
+
+    rth = underlying_df.loc[rth_mask].assign(
+        _et_date=et_dates[rth_mask].values,
+        _ts_ns=ts_utc[rth_mask].astype("int64").values,
+    )
+    first_bars = (
+        rth.sort_values("_ts_ns", kind="stable")
+        .groupby("_et_date", sort=True)
+        .first()
+    )
+    return {d: float(row["open"]) for d, row in first_bars.iterrows()}
+
+
+def _expiries_to_pull(trading_day: date, horizon: int = EXPIRIES_PER_TRADING_DAY) -> list[date]:
+    """Return the next ``horizon`` weekly Fridays from ``trading_day`` inclusive.
+
+    If ``trading_day`` is itself a Friday, it is the first element.
+    Used so per-event ``nearest_weekly_friday`` lookups can resolve to
+    either today's Friday (events 09:35-15:30 ET) or next week's (Friday
+    post-close + forward-horizon samples)."""
+    fridays = list(
+        iter_weekly_fridays(trading_day, trading_day + timedelta(days=7 * (horizon + 1)))
+    )
+    return fridays[:horizon]
+
+
+def fetch_contracts_for_month(
+    year_month: str,
+    underlying_df,
+    expiries_per_day: int = EXPIRIES_PER_TRADING_DAY,
+    inter_call_sleep_seconds: float = INTER_CALL_SLEEP_SECONDS,
+):
+    """For each trading day in ``year_month``, list option contracts in
+    ``ATM_open +/- INGEST_STRIKE_HALF_WIDTH`` for the next
+    ``expiries_per_day`` weekly Friday expiries.
+
+    Returns a DataFrame with one row per (date_observed, expiry, contract).
+    The ``timestamp`` column carries the trading-day midnight UTC so
+    ``storage.write_partitioned_parquet`` routes each row to the correct
+    locked split. Empty if ``underlying_df`` has no RTH bars for the month.
+    """
+    import pandas as pd
+
+    daily_opens = _daily_opens_from_underlying(underlying_df)
+    yr, mo = (int(p) for p in year_month.split("-"))
+    daily_opens = {
+        d: spot for d, spot in daily_opens.items() if d.year == yr and d.month == mo
+    }
+
+    columns = [
+        "timestamp", "ingest_spot", "expiry", "ticker", "strike",
+        "contract_type", "primary_exchange", "expiration_date",
+    ]
+    if not daily_opens:
+        return pd.DataFrame(columns=columns)
+
+    rows: list[dict] = []
+    client = _client()
+    for trading_day in sorted(daily_opens):
+        spot = daily_opens[trading_day]
+        spot_min = spot - INGEST_STRIKE_HALF_WIDTH
+        spot_max = spot + INGEST_STRIKE_HALF_WIDTH
+        for expiry in _expiries_to_pull(trading_day, expiries_per_day):
+            for kind in ("call", "put"):
+                for contract in client.list_options_contracts(
+                    underlying_ticker=SPEC.options_symbol,
+                    expiration_date=expiry.isoformat(),
+                    contract_type=kind,
+                    strike_price_gte=spot_min,
+                    strike_price_lte=spot_max,
+                    expired=True,
+                    limit=1000,
+                ):
+                    c = contract if isinstance(contract, dict) else contract.__dict__
+                    rows.append({
+                        "timestamp": pd.Timestamp(trading_day, tz="UTC"),
+                        "ingest_spot": spot,
+                        "expiry": expiry.isoformat(),
+                        "ticker": c.get("ticker"),
+                        "strike": float(c.get("strike_price", 0.0)),
+                        "contract_type": c.get("contract_type", kind),
+                        "primary_exchange": c.get("primary_exchange", ""),
+                        "expiration_date": c.get("expiration_date", expiry.isoformat()),
+                    })
+            time.sleep(inter_call_sleep_seconds)
+
+    if not rows:
+        return pd.DataFrame(columns=columns)
+    return pd.DataFrame.from_records(rows)
 
 
 def fetch_option_aggregates(occ_ticker: str, start: date, end: date):

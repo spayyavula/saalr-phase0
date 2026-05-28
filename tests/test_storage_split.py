@@ -129,3 +129,40 @@ def test_write_partitioned_parquet_pure_month_still_one_file(tmp_path):
         "train/smoke/2024-06.parquet"
     )
     assert results[0].row_count == 2
+
+
+@pytest.mark.skipif(
+    not _pandas_available(),
+    reason="pandas + pyarrow required for read_month_across_splits",
+)
+def test_read_month_across_splits_unions_boundary_files(tmp_path):
+    """A boundary month with rows in two splits must read back as one frame."""
+    import pandas as pd
+
+    from src.storage import read_month_across_splits, write_partitioned_parquet
+
+    df = pd.DataFrame.from_records([
+        {"timestamp": pd.Timestamp("2026-02-10 12:00", tz="UTC"), "value": 1.0},
+        {"timestamp": pd.Timestamp("2026-02-15 23:59", tz="UTC"), "value": 2.0},
+        {"timestamp": pd.Timestamp("2026-02-16 00:00", tz="UTC"), "value": 3.0},
+        {"timestamp": pd.Timestamp("2026-02-20 12:00", tz="UTC"), "value": 4.0},
+    ])
+    write_partitioned_parquet(df, tmp_path, "smoke")
+
+    unioned = read_month_across_splits(tmp_path, "smoke", "2026-02")
+    assert len(unioned) == 4
+    assert list(unioned["value"]) == [1.0, 2.0, 3.0, 4.0]
+
+
+@pytest.mark.skipif(
+    not _pandas_available(),
+    reason="pandas + pyarrow required for read_month_across_splits",
+)
+def test_read_month_across_splits_missing_month_returns_empty(tmp_path):
+    import pandas as pd
+
+    from src.storage import read_month_across_splits
+
+    result = read_month_across_splits(tmp_path, "smoke", "2024-06")
+    assert isinstance(result, pd.DataFrame)
+    assert result.empty
