@@ -162,6 +162,13 @@ def _all_locked_months() -> list[str]:
     return _iter_months(SPEC.train_start, SPEC.holdout_end)
 
 
+def _prev_month(year_month: str) -> str:
+    y, m = (int(p) for p in year_month.split("-"))
+    if m == 1:
+        return f"{y - 1:04d}-12"
+    return f"{y:04d}-{m - 1:02d}"
+
+
 # ---------------------------------------------------------------------------
 # stage registry
 # ---------------------------------------------------------------------------
@@ -440,6 +447,94 @@ def _stage_score_sentiment() -> StageFn:
     return stage
 
 
+def _stage_match_events() -> StageFn:
+    """Per-event sample construction: join sentiment + spot + contracts +
+    mid-quotes into the events frame compute_iv/evaluate consume.
+
+    Gated on BOTH backfill_options and score_sentiment being complete for
+    the month. Sentiment is loaded for the previous month plus the current
+    month so the 4h EWMA look-back is complete across the month boundary.
+    This is the I/O-heaviest stage (4 mid-quote pulls per event,
+    parallelized 4-way); chunked by month so it resumes cleanly."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "match_events")
+        chunks = stage_state["chunks"]
+        stages = state.get("stages", {})
+        options_chunks = stages.get("backfill_options", {}).get("chunks", {})
+        sentiment_chunks = stages.get("score_sentiment", {}).get("chunks", {})
+
+        for month in _all_locked_months():
+            if chunks.get(month, {}).get("status") == "complete":
+                continue
+            if options_chunks.get(month, {}).get("status") != "complete":
+                continue
+            if sentiment_chunks.get(month, {}).get("status") != "complete":
+                continue
+
+            try:
+                import pandas as pd  # lazy
+
+                from src import storage
+                from src.match_events import build_events_frame_for_month
+
+                data_root = repo_root / "data"
+                sent_frames = []
+                for m in (_prev_month(month), month):
+                    df = storage.read_month_across_splits(data_root, "sentiment", m)
+                    if not df.empty:
+                        sent_frames.append(df)
+                sentiment_df = (
+                    pd.concat(sent_frames, ignore_index=True)
+                    if sent_frames
+                    else pd.DataFrame()
+                )
+                underlying_df = storage.read_month_across_splits(data_root, "underlying", month)
+                options_df = storage.read_month_across_splits(data_root, "options", month)
+                rfr_df = storage.read_month_across_splits(data_root, "risk_free", month)
+
+                events = build_events_frame_for_month(
+                    month, sentiment_df, underlying_df, options_df, rfr_df
+                )
+                rows = int(getattr(events, "shape", (0,))[0])
+                usable = (
+                    int((events["failure_reason"] == "").sum()) if rows > 0 else 0
+                )
+                if rows > 0:
+                    storage.write_partitioned_parquet(events, data_root, "events")
+                chunks[month] = {
+                    "status": "complete",
+                    "rows": rows,
+                    "usable_rows": usable,
+                    "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True,
+                    message=f"match_events {month} rows={rows} usable={usable}",
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("match_events %s failed: %s", month, exc)
+                logger.debug("%s", traceback.format_exc())
+                chunks[month] = {
+                    "status": "failed",
+                    "error": str(exc),
+                    "failed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"match_events {month} FAILED: {exc}"
+                )
+
+        opt_done = stages.get("backfill_options", {}).get("status") == "complete"
+        sent_done = stages.get("score_sentiment", {}).get("status") == "complete"
+        if opt_done and sent_done:
+            stage_state["status"] = "complete"
+        return StageOutcome(did_work=False)
+
+    return stage
+
+
 STAGES: list[tuple[str, StageFn]] = [
     ("backfill_risk_free", _stage_backfill_risk_free()),
     ("backfill_underlying", _stage_backfill_underlying()),
@@ -450,11 +545,7 @@ STAGES: list[tuple[str, StageFn]] = [
         "compute_iv",
         "not yet implemented; will live in src/iv_surface.py (Black-Scholes inversion)",
     )),
-    ("match_events", _stub_stage(
-        "match_events",
-        "not yet implemented; joins news -> IV(t) -> IV(t+30) into the events "
-        "frame that evaluate_primary expects",
-    )),
+    ("match_events", _stage_match_events()),
     ("fit_baselines", _stub_stage(
         "fit_baselines",
         "not yet implemented; runs src.baselines.compute_all_baselines on the "

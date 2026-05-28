@@ -15,6 +15,21 @@
       "sha256": "b0a980775ef5db1c57740217c1fa1dd94702656ec8bc27338e6805d2195ef4b3",
       "written_at_utc": "2026-05-27T15:51:18Z"
     },
+    "holdout/options/2026-02.parquet": {
+      "rows": 1800,
+      "sha256": "90ea311e2e04a4dc71c54c92ad3c89011a841e653d3145e81c8bb0360f7ef4a9",
+      "written_at_utc": "2026-05-28T02:12:36Z"
+    },
+    "holdout/options/2026-03.parquet": {
+      "rows": 3700,
+      "sha256": "8e3e80221e2dbd4e70a02cdaf1d22c56da7077df5f93e059e8d4b13ee258fa1b",
+      "written_at_utc": "2026-05-28T02:13:29Z"
+    },
+    "holdout/options/2026-04.parquet": {
+      "rows": 4082,
+      "sha256": "14bd9ae8938bf3cdbbb1bfdc4d04561ee4f5655bed0fbabddcf718d0cbdea559",
+      "written_at_utc": "2026-05-28T02:14:21Z"
+    },
     "holdout/risk_free/2026-02.parquet": {
       "rows": 10,
       "sha256": "2b8bcc93fb3060b0d6f0fac74aaa12fc0b869e9b8dd98e1b1cb4207fb43a63d7",
@@ -234,6 +249,41 @@
       "rows": 3832,
       "sha256": "9b4d49b968e9e246f2887c0de44fc3ca7f7b1d5256e3d28abaf35b76168f44a4",
       "written_at_utc": "2026-05-28T02:02:15Z"
+    },
+    "train/options/2025-03.parquet": {
+      "rows": 4314,
+      "sha256": "db9948b71e7a25045a75e59c3154d154ecaa427211dfafb261fcd6771954006d",
+      "written_at_utc": "2026-05-28T02:03:07Z"
+    },
+    "train/options/2025-04.parquet": {
+      "rows": 3402,
+      "sha256": "688be7c68b2c1402b5bf5bd9c0d5f9eaf8f117236b261cb9a8fd45a881a77a68",
+      "written_at_utc": "2026-05-28T02:03:58Z"
+    },
+    "train/options/2025-05.parquet": {
+      "rows": 4354,
+      "sha256": "a3e956f4e8cc37fae59f21affb79ee65c994e87ff2fa4409af8ed537ee165c60",
+      "written_at_utc": "2026-05-28T02:04:50Z"
+    },
+    "train/options/2025-06.parquet": {
+      "rows": 3420,
+      "sha256": "e6c1c411c96959a314dd8ab1fee34e3643ca7c338f23ae1baf06e9e7d2a79457",
+      "written_at_utc": "2026-05-28T02:05:39Z"
+    },
+    "train/options/2025-07.parquet": {
+      "rows": 3848,
+      "sha256": "caa2847fa7b1ccf41ab92a8b1ed18c9b59052e9fb31ab3a30fa4e596b1c47a33",
+      "written_at_utc": "2026-05-28T02:06:33Z"
+    },
+    "train/options/2025-08.parquet": {
+      "rows": 4120,
+      "sha256": "acc4756f22a705f8409eafd147835c65a90ed6bff89f975bdcc9b6437b7ab266",
+      "written_at_utc": "2026-05-28T02:07:26Z"
+    },
+    "train/options/2025-09.parquet": {
+      "rows": 4226,
+      "sha256": "d97aefd7faca144c08eaae19e9b13f55004b19e9640d20884930a1af4f852b4a",
+      "written_at_utc": "2026-05-28T02:08:18Z"
     },
     "train/risk_free/2024-01.parquet": {
       "rows": 22,
@@ -574,6 +624,31 @@
       "rows": 618,
       "sha256": "ebaa1183dd0e7f5a8850b66668b37ab6fe5f5088c1ac91f19702e1dc2ebd040d",
       "written_at_utc": "2026-05-28T01:28:07Z"
+    },
+    "validation/options/2025-10.parquet": {
+      "rows": 4622,
+      "sha256": "1a68d051caac2a74b6d3696deaa90925039d2208acc3b0ba45a1e2908717431a",
+      "written_at_utc": "2026-05-28T02:09:12Z"
+    },
+    "validation/options/2025-11.parquet": {
+      "rows": 3844,
+      "sha256": "9f9a865fc934264d1a7128637efc75876ae4db89c1e054c14c276953fe305f41",
+      "written_at_utc": "2026-05-28T02:10:01Z"
+    },
+    "validation/options/2025-12.parquet": {
+      "rows": 4400,
+      "sha256": "d8021ef093667da5627b128ab05d76f1c7c942709cd9d5e8f1f9735e00ad82fa",
+      "written_at_utc": "2026-05-28T02:10:57Z"
+    },
+    "validation/options/2026-01.parquet": {
+      "rows": 4004,
+      "sha256": "59b3c53fa0baf4b556d4faf29fa1dd0db378e8d978b4e0290263fd549730b806",
+      "written_at_utc": "2026-05-28T02:11:48Z"
+    },
+    "validation/options/2026-02.parquet": {
+      "rows": 2000,
+      "sha256": "e812648e36055f25b29bb837115fbdd5f1c9009344063a024d0266bd8ca565ad",
+      "written_at_utc": "2026-05-28T02:12:36Z"
     },
     "validation/risk_free/2025-10.parquet": {
       "rows": 23,

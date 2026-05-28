@@ -114,28 +114,33 @@ def fetch_option_mid_quote_at(
     occ_ticker: str,
     sample_time: datetime,
     window_seconds: int = MID_QUOTE_WINDOW_SECONDS,
+    limit: int = 100,
 ) -> Optional[dict]:
     """Return the as-of NBBO mid-quote for ``occ_ticker`` at ``sample_time``.
 
-    Pulls NBBO ticks in ``[sample - window, sample + window]`` sorted
-    descending and returns the first tick with
-    ``sip_timestamp <= sample_time``. ``None`` if no qualifying tick is in
-    the window or if bid/ask is missing/invalid.
+    Pulls NBBO ticks in ``[sample - window, sample]`` sorted descending
+    and returns the first tick with valid bid/ask (the most recent quote
+    at or before ``sample_time``). ``None`` if no qualifying tick is in
+    the window.
 
-    The 30-second window is conservative for an ATM SPY weekly (sub-second
-    NBBO update rates during RTH) and protects against feed gaps without
-    bloating the query."""
+    The upper bound is ``sample_time`` exactly (not ``sample + window``):
+    we only ever pick ticks at or before the sample, so including the
+    future side would waste the ``limit`` budget on ticks we discard —
+    and on a liquid contract with hundreds of ticks in the +window side,
+    could flood the page and produce a false negative. ``order=desc`` +
+    ``timestamp_lte=sample`` means the first returned row is already the
+    answer; ``limit`` only needs to be large enough to skip past a few
+    crossed/locked quotes at the very top."""
     if sample_time.tzinfo is None:
         sample_time = sample_time.replace(tzinfo=timezone.utc)
     sample_ns = int(sample_time.timestamp() * 1_000_000_000)
     lo_ns = sample_ns - window_seconds * 1_000_000_000
-    hi_ns = sample_ns + window_seconds * 1_000_000_000
 
     quotes = _client().list_quotes(
         ticker=occ_ticker,
         timestamp_gte=lo_ns,
-        timestamp_lte=hi_ns,
-        limit=500,
+        timestamp_lte=sample_ns,
+        limit=limit,
         sort="timestamp",
         order="desc",
     )

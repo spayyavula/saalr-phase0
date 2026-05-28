@@ -19,19 +19,22 @@ The trading-day calendar is derived from the existence of
 ``data/{split}/underlying/{YYYY-MM}.parquet`` bars on a date, so the
 project does not depend on an external exchange-calendar package.
 
-This module contains only the **pure helpers** for sample
-construction. The I/O-heavy mid-quote pull at each ``(t, expiry,
-strike)`` and the orchestrator stage land in a follow-on commit
-once ``backfill_options`` has finished writing the contract universe.
+Pure helpers (no I/O) live above ``build_events_frame_for_month``.
+The frame-builder at the bottom drives the per-event mid-quote pulls
+via ``src.options.fetch_option_mid_quote_at`` and returns the
+events frame that ``compute_iv`` and ``evaluate_validation`` consume.
 """
 from __future__ import annotations
 
+import logging
 import math
 from datetime import date, datetime, time as dtime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
 from src.locked_spec import SPEC
+
+logger = logging.getLogger(__name__)
 
 _ET = ZoneInfo("America/New_York")
 _EVENT_OPEN_ET = dtime.fromisoformat(SPEC.event_window_open_et)
@@ -190,6 +193,28 @@ def find_spot_at_minute(underlying_df, ts_utc: datetime) -> Optional[float]:
 # ---------------------------------------------------------------------------
 
 
+EVENTS_FRAME_COLUMNS: tuple[str, ...] = (
+    "article_id",
+    "timestamp",            # event time = published_utc (UTC, tz-aware)
+    "event_date_et",        # ET trading day
+    "sentiment_score",      # this article's raw P_pos - P_neg
+    "aggregated_signal",    # EWMA per SPEC.aggregation_lookback_hours/halflife
+    "expiry",               # ISO date string, nearest weekly Friday
+    "atm_strike",           # closest listed strike to spot_at_t
+    "spot_at_t",
+    "spot_at_t30",
+    "rfr",                  # decimal, e.g. 0.0365
+    "call_ticker",
+    "put_ticker",
+    "call_mid_t", "call_spread_pct_t",
+    "put_mid_t",  "put_spread_pct_t",
+    "call_mid_t30", "call_spread_pct_t30",
+    "put_mid_t30",  "put_spread_pct_t30",
+    "passes_spread_filter",
+    "failure_reason",       # empty if usable for IV; descriptive string otherwise
+)
+
+
 def find_rfr_at_date(risk_free_df, d: date) -> Optional[float]:
     """Return the FRED DGS3MO observation on date ``d`` (or the most
     recent prior observation; weekends/holidays carry forward) as an
@@ -210,3 +235,235 @@ def find_rfr_at_date(risk_free_df, d: date) -> Optional[float]:
         return None
     idx = ts[mask].idxmax()
     return float(risk_free_df.loc[idx, "yield_pct"]) / 100.0
+
+
+# ---------------------------------------------------------------------------
+# Contract lookups from the backfill_options universe
+# ---------------------------------------------------------------------------
+
+
+def _pull_four_quotes(call_ticker, put_ticker, t_dt, t30_dt):
+    """Fetch the four mid-quotes (call/put at t and t30) concurrently.
+
+    The calls are independent and network-bound, so a 4-worker thread
+    pool collapses ~4 sequential round-trips into ~1. ``_client()`` in
+    ``src.options`` builds a fresh ``RESTClient`` per call, so each
+    thread gets its own client — no shared mutable state.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    from src.options import fetch_option_mid_quote_at
+
+    specs = {
+        ("call", "t"): (call_ticker, t_dt),
+        ("put", "t"): (put_ticker, t_dt),
+        ("call", "t30"): (call_ticker, t30_dt),
+        ("put", "t30"): (put_ticker, t30_dt),
+    }
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = {
+            key: pool.submit(fetch_option_mid_quote_at, ticker, when)
+            for key, (ticker, when) in specs.items()
+        }
+        return {key: fut.result() for key, fut in futures.items()}
+
+
+def _build_contract_lookups(options_df):
+    """Index the options contract universe for O(1) per-event lookup.
+
+    Returns ``(ticker_by_key, strikes_by_de)`` where:
+    - ``ticker_by_key[(date, expiry, strike, kind)] -> occ_ticker``
+    - ``strikes_by_de[(date, expiry)] -> sorted list of strikes that
+      have BOTH a call and a put listed`` (call_put_mid needs both legs)
+    """
+    import pandas as pd
+
+    ticker_by_key: dict = {}
+    legs_by_des: dict = {}  # (date, expiry, strike) -> set of kinds
+
+    dates = pd.to_datetime(options_df["timestamp"], utc=True).dt.date
+    for d, expiry, strike, kind, ticker in zip(
+        dates,
+        options_df["expiry"],
+        options_df["strike"],
+        options_df["contract_type"],
+        options_df["ticker"],
+    ):
+        strike = float(strike)
+        ticker_by_key[(d, expiry, strike, kind)] = ticker
+        legs_by_des.setdefault((d, expiry, strike), set()).add(kind)
+
+    strikes_by_de: dict = {}
+    for (d, expiry, strike), kinds in legs_by_des.items():
+        if "call" in kinds and "put" in kinds:
+            strikes_by_de.setdefault((d, expiry), []).append(strike)
+    for key in strikes_by_de:
+        strikes_by_de[key].sort()
+
+    return ticker_by_key, strikes_by_de
+
+
+def build_events_frame_for_month(
+    year_month: str,
+    sentiment_df,
+    underlying_df,
+    options_df,
+    risk_free_df,
+    forward_horizon_minutes: int = SPEC.forward_horizon_minutes,
+    inter_call_sleep_seconds: float = 0.0,
+    max_events: Optional[int] = None,
+):
+    """Build the per-event sample frame for ``year_month``.
+
+    For each news article that is an event (in-window, trading day,
+    ET date in ``year_month``):
+
+    1. ``aggregated_signal`` = EWMA over recent articles (``sentiment_df``
+       should include the prior month so the 4h look-back is complete).
+    2. ``spot_at_t`` / ``spot_at_t30`` from ``underlying_df``.
+    3. nearest weekly Friday expiry; ATM-closest-listed strike from the
+       contract universe; the (expiry, strike) is frozen for both samples
+       (decision D1).
+    4. Four mid-quotes via ``fetch_option_mid_quote_at``: call+put at t and
+       at t+``forward_horizon_minutes``.
+
+    Rows that cannot be fully populated are still emitted with a
+    ``failure_reason`` so downstream stages can count drops rather than
+    have them vanish. ``passes_spread_filter`` is True only when all four
+    legs are within ``SPEC.options_max_spread_pct_of_mid``.
+
+    ``max_events`` caps the number of events processed (smoke testing).
+    """
+    import pandas as pd
+
+    if sentiment_df is None or len(sentiment_df) == 0:
+        return pd.DataFrame(columns=EVENTS_FRAME_COLUMNS)
+
+    yr, mo = (int(p) for p in year_month.split("-"))
+
+    # Article (time, score) arrays for the EWMA — reused across events.
+    article_times = pd.to_datetime(sentiment_df["timestamp"], utc=True).tolist()
+    article_scores = [float(s) for s in sentiment_df["sentiment_score"].tolist()]
+
+    # Trading-day calendar from underlying (ET dates with any bar).
+    trading_days: set = set()
+    if underlying_df is not None and len(underlying_df) > 0:
+        ud_et = pd.to_datetime(underlying_df["timestamp"], utc=True).dt.tz_convert(_ET)
+        trading_days = set(ud_et.dt.date)
+
+    ticker_by_key, strikes_by_de = _build_contract_lookups(options_df)
+
+    # Candidate events: this month's in-window articles on trading days.
+    sent_ts = pd.to_datetime(sentiment_df["timestamp"], utc=True)
+    sent_et_date = sent_ts.dt.tz_convert(_ET).dt.date
+    rows_out: list[dict] = []
+    processed = 0
+
+    for i in range(len(sentiment_df)):
+        t = sent_ts.iloc[i]
+        et_d = sent_et_date.iloc[i]
+        if et_d.year != yr or et_d.month != mo:
+            continue
+        if not is_in_event_window(t.to_pydatetime()):
+            continue
+        if et_d not in trading_days:
+            continue
+
+        if max_events is not None and processed >= max_events:
+            break
+        processed += 1
+
+        article_id = sentiment_df.iloc[i].get("id")
+        raw_score = float(sentiment_df.iloc[i]["sentiment_score"])
+        signal = compute_aggregated_signal(article_times, article_scores, t.to_pydatetime())
+        t30 = t.to_pydatetime() + timedelta(minutes=forward_horizon_minutes)
+
+        row = {
+            "article_id": article_id,
+            "timestamp": t,
+            "event_date_et": et_d.isoformat(),
+            "sentiment_score": raw_score,
+            "aggregated_signal": signal,
+            "expiry": None, "atm_strike": None,
+            "spot_at_t": None, "spot_at_t30": None, "rfr": None,
+            "call_ticker": None, "put_ticker": None,
+            "call_mid_t": None, "call_spread_pct_t": None,
+            "put_mid_t": None, "put_spread_pct_t": None,
+            "call_mid_t30": None, "call_spread_pct_t30": None,
+            "put_mid_t30": None, "put_spread_pct_t30": None,
+            "passes_spread_filter": False,
+            "failure_reason": "",
+        }
+
+        spot_t = find_spot_at_minute(underlying_df, t.to_pydatetime())
+        spot_t30 = find_spot_at_minute(underlying_df, t30)
+        rfr = find_rfr_at_date(risk_free_df, et_d)
+        row["spot_at_t"] = spot_t
+        row["spot_at_t30"] = spot_t30
+        row["rfr"] = rfr
+
+        if spot_t is None:
+            row["failure_reason"] = "no_underlying_at_t"
+            rows_out.append(row)
+            continue
+        if spot_t30 is None:
+            row["failure_reason"] = "no_underlying_at_t30"
+            rows_out.append(row)
+            continue
+        if rfr is None:
+            row["failure_reason"] = "no_rfr_for_date"
+            rows_out.append(row)
+            continue
+
+        expiry = nearest_weekly_friday(et_d)
+        row["expiry"] = expiry.isoformat()
+        de_key = (et_d, expiry.isoformat())
+        available = strikes_by_de.get(de_key)
+        atm = pick_atm_strike(spot_t, available) if available else None
+        if atm is None:
+            row["failure_reason"] = "no_atm_contract_for_expiry"
+            rows_out.append(row)
+            continue
+        row["atm_strike"] = atm
+
+        call_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "call"))
+        put_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "put"))
+        row["call_ticker"] = call_ticker
+        row["put_ticker"] = put_ticker
+        if call_ticker is None or put_ticker is None:
+            row["failure_reason"] = "missing_call_or_put_leg"
+            rows_out.append(row)
+            continue
+
+        quotes = _pull_four_quotes(call_ticker, put_ticker, t.to_pydatetime(), t30)
+        if inter_call_sleep_seconds:
+            import time as _time
+            _time.sleep(inter_call_sleep_seconds)
+
+        missing = [f"{leg}_{when}" for (leg, when), q in quotes.items() if q is None]
+        row["call_mid_t"] = quotes[("call", "t")]["mid"] if quotes[("call", "t")] else None
+        row["call_spread_pct_t"] = quotes[("call", "t")]["spread_pct_of_mid"] if quotes[("call", "t")] else None
+        row["put_mid_t"] = quotes[("put", "t")]["mid"] if quotes[("put", "t")] else None
+        row["put_spread_pct_t"] = quotes[("put", "t")]["spread_pct_of_mid"] if quotes[("put", "t")] else None
+        row["call_mid_t30"] = quotes[("call", "t30")]["mid"] if quotes[("call", "t30")] else None
+        row["call_spread_pct_t30"] = quotes[("call", "t30")]["spread_pct_of_mid"] if quotes[("call", "t30")] else None
+        row["put_mid_t30"] = quotes[("put", "t30")]["mid"] if quotes[("put", "t30")] else None
+        row["put_spread_pct_t30"] = quotes[("put", "t30")]["spread_pct_of_mid"] if quotes[("put", "t30")] else None
+
+        if missing:
+            row["failure_reason"] = "no_quote_" + ",".join(sorted(missing))
+            rows_out.append(row)
+            continue
+
+        spreads = [
+            row["call_spread_pct_t"], row["put_spread_pct_t"],
+            row["call_spread_pct_t30"], row["put_spread_pct_t30"],
+        ]
+        row["passes_spread_filter"] = all(
+            s is not None and s <= SPEC.options_max_spread_pct_of_mid for s in spreads
+        )
+        rows_out.append(row)
+
+    if not rows_out:
+        return pd.DataFrame(columns=EVENTS_FRAME_COLUMNS)
+    return pd.DataFrame.from_records(rows_out, columns=EVENTS_FRAME_COLUMNS)
