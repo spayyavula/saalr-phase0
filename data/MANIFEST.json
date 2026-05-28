@@ -75,6 +75,11 @@
       "sha256": "0c428dfc2c0cea83ebdd0552038c6e8cc11b390be04d21a25632e0c7a5887597",
       "written_at_utc": "2026-05-27T15:06:45Z"
     },
+    "train/events/2024-01.parquet": {
+      "rows": 585,
+      "sha256": "51725f9074b6680cbdc6aeb9338d9f32d969ff62b423114dbd883b73e2a2ec54",
+      "written_at_utc": "2026-05-28T04:15:39Z"
+    },
     "train/news/2024-01.parquet": {
       "rows": 2219,
       "sha256": "2f14f0a2f4a8a41104e4f24fde3220ccf4180c4512edc16db041eb7556a77117",

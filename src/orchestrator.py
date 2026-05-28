@@ -614,6 +614,125 @@ def _stage_compute_iv() -> StageFn:
     return stage
 
 
+def _read_split_iv(repo_root: Path, split: str):
+    """Concatenate every compute_iv output month for one split. Empty frame
+    if none exist."""
+    import pandas as pd
+
+    d = repo_root / "data" / split / "iv"
+    if not d.exists():
+        return pd.DataFrame()
+    frames = [pd.read_parquet(p) for p in sorted(d.glob("*.parquet"))]
+    if not frames:
+        return pd.DataFrame()
+    return pd.concat(frames, ignore_index=True).sort_values("timestamp").reset_index(drop=True)
+
+
+def _stage_fit_baselines() -> StageFn:
+    """Compute and persist the §7 baselines on the TRAIN events (locked
+    numbers the eventual holdout test compares against). One-shot, gated on
+    compute_iv being complete."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "fit_baselines")
+        if stage_state.get("status") == "complete":
+            return StageOutcome(did_work=False)
+        if state.get("stages", {}).get("compute_iv", {}).get("status") != "complete":
+            return StageOutcome(did_work=False)
+
+        try:
+            import json
+
+            from src.baselines import compute_all_baselines
+
+            train = _read_split_iv(repo_root, "train")
+            usable = train[train["forward_iv_change"].notna()] if len(train) else train
+            if len(usable) < 2:
+                stage_state["status"] = "complete"
+                stage_state["note"] = "insufficient train events for baselines"
+                return StageOutcome(did_work=True, message="fit_baselines: insufficient train events")
+
+            b = compute_all_baselines(usable)
+            results_dir = repo_root / "results"
+            results_dir.mkdir(parents=True, exist_ok=True)
+            (results_dir / "train_baselines.json").write_text(
+                json.dumps({
+                    "n_train_events": int(len(usable)),
+                    "b1_persistence_ic": b.b1_persistence.ic,
+                    "b2_random_ic": b.b2_random.ic,
+                    "b3_prior_day_same_time_ic": b.b3_prior_day_same_time.ic,
+                    "strongest_ic": b.strongest_ic,
+                }, indent=2, default=str) + "\n",
+                encoding="utf-8",
+            )
+            stage_state["status"] = "complete"
+            stage_state["strongest_baseline_ic"] = b.strongest_ic
+            stage_state["completed_at_utc"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            return StageOutcome(
+                did_work=True,
+                message=f"fit_baselines strongest_ic={b.strongest_ic:.4f} n={len(usable)}",
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("fit_baselines failed: %s", exc)
+            logger.debug("%s", traceback.format_exc())
+            stage_state["status"] = "failed"
+            stage_state["error"] = str(exc)
+            return StageOutcome(did_work=True, message=f"fit_baselines FAILED: {exc}")
+
+    return stage
+
+
+def _stage_evaluate_validation() -> StageFn:
+    """Run the locked §§6-9 evaluation on the VALIDATION split only. One-shot,
+    gated on compute_iv complete.
+
+    NEVER reads the holdout split — the §12 stopping rule permits exactly one
+    holdout evaluation, executed by hand in Week 7. This stage exists for
+    model-selection / pipeline-debug on validation, as §4 intends."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "evaluate_validation")
+        if stage_state.get("status") == "complete":
+            return StageOutcome(did_work=False)
+        if state.get("stages", {}).get("compute_iv", {}).get("status") != "complete":
+            return StageOutcome(did_work=False)
+
+        try:
+            from src.evaluate import evaluate_primary
+
+            val = _read_split_iv(repo_root, "validation")
+            usable = val[val["forward_iv_change"].notna()] if len(val) else val
+            if len(usable) < 2:
+                stage_state["status"] = "complete"
+                stage_state["note"] = "insufficient validation events"
+                return StageOutcome(did_work=True, message="evaluate_validation: insufficient events")
+
+            result = evaluate_primary(usable, label="validation_primary")
+            result.write(repo_root / "results")
+            stage_state["status"] = "complete"
+            stage_state["ic"] = result.primary_ic.ic
+            stage_state["p_value"] = result.primary_ic.p_value
+            stage_state["passes_all"] = result.verdict.passes_all
+            stage_state["n_events"] = result.n_events
+            stage_state["completed_at_utc"] = datetime.utcnow().isoformat(timespec="seconds") + "Z"
+            return StageOutcome(
+                did_work=True,
+                message=(
+                    f"evaluate_validation IC={result.primary_ic.ic:.4f} "
+                    f"p={result.primary_ic.p_value:.4g} passes_all={result.verdict.passes_all} "
+                    f"n={result.n_events}"
+                ),
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("evaluate_validation failed: %s", exc)
+            logger.debug("%s", traceback.format_exc())
+            stage_state["status"] = "failed"
+            stage_state["error"] = str(exc)
+            return StageOutcome(did_work=True, message=f"evaluate_validation FAILED: {exc}")
+
+    return stage
+
+
 STAGES: list[tuple[str, StageFn]] = [
     ("backfill_risk_free", _stage_backfill_risk_free()),
     ("backfill_underlying", _stage_backfill_underlying()),
@@ -622,17 +741,8 @@ STAGES: list[tuple[str, StageFn]] = [
     ("score_sentiment", _stage_score_sentiment()),
     ("match_events", _stage_match_events()),
     ("compute_iv", _stage_compute_iv()),
-    ("fit_baselines", _stub_stage(
-        "fit_baselines",
-        "not yet implemented; runs src.baselines.compute_all_baselines on the "
-        "training events frame and persists results",
-    )),
-    ("evaluate_validation", _stub_stage(
-        "evaluate_validation",
-        "not yet implemented; runs src.evaluate.evaluate_primary on the validation "
-        "events frame. NOTE: never touch the holdout from the orchestrator — "
-        "the §12 stopping rule allows exactly one holdout evaluation, done by hand.",
-    )),
+    ("fit_baselines", _stage_fit_baselines()),
+    ("evaluate_validation", _stage_evaluate_validation()),
 ]
 
 
