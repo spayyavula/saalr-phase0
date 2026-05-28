@@ -1,5 +1,35 @@
 {
   "files": {
+    "holdout/events/2026-02.parquet": {
+      "rows": 135,
+      "sha256": "7e98244ab03f39003f554dbc14d529968e2f8712fa2cd7a5b070ae1d6f058627",
+      "written_at_utc": "2026-05-28T11:12:37Z"
+    },
+    "holdout/events/2026-03.parquet": {
+      "rows": 299,
+      "sha256": "46a05a73859109726c49e8be14cf393bdfcef9bb7ff49a650af74fdc9f9af86c",
+      "written_at_utc": "2026-05-28T11:28:52Z"
+    },
+    "holdout/events/2026-04.parquet": {
+      "rows": 300,
+      "sha256": "1d2dcbb670e8ee1cb9923f4dfe9935dbe50391dbbde1a2ecd50b51119cb7909a",
+      "written_at_utc": "2026-05-28T11:42:31Z"
+    },
+    "holdout/iv/2026-02.parquet": {
+      "rows": 135,
+      "sha256": "b95d927d28c1a2d4557ac87708e6a49c1d05ecb747527141d687f9f8374d2bb4",
+      "written_at_utc": "2026-05-28T11:52:15Z"
+    },
+    "holdout/iv/2026-03.parquet": {
+      "rows": 299,
+      "sha256": "6ea83221701896cddc5e58f581bb323d562132aab7e0f7cb665ee82d4be1143f",
+      "written_at_utc": "2026-05-28T11:52:38Z"
+    },
+    "holdout/iv/2026-04.parquet": {
+      "rows": 300,
+      "sha256": "e5c1ba494253f3dd58792a3db8f185d7378b4795756367371c51509eaf2924c9",
+      "written_at_utc": "2026-05-28T11:52:59Z"
+    },
     "holdout/news/2026-02.parquet": {
       "rows": 496,
       "sha256": "2023e97347940cd6ef77eb54d55de9c5f441bea602a3d61328311772824b016d",
@@ -104,6 +134,186 @@
       "rows": 470,
       "sha256": "3a037783636814d42375f02040c3c62aea1c6febb46ae0562b8327f814c3c742",
       "written_at_utc": "2026-05-28T06:52:16Z"
+    },
+    "train/events/2024-07.parquet": {
+      "rows": 543,
+      "sha256": "c54da5c1c3d72e998fc2bf53c76a343017d5543d38d74144c8657480bc526112",
+      "written_at_utc": "2026-05-28T07:23:14Z"
+    },
+    "train/events/2024-08.parquet": {
+      "rows": 129,
+      "sha256": "8dd87b2e6b0c9e2572f0625b3300afe892c0a360250c7f2b6c56b1cb2e2d1a3a",
+      "written_at_utc": "2026-05-28T07:31:39Z"
+    },
+    "train/events/2024-09.parquet": {
+      "rows": 157,
+      "sha256": "d3de305c44ed6756ae27ded5c617bf6e7b72dd278374ed61e90b6fc43a5aedeb",
+      "written_at_utc": "2026-05-28T07:42:06Z"
+    },
+    "train/events/2024-10.parquet": {
+      "rows": 157,
+      "sha256": "f7e699da86ef66b0619481580360199e0d995e1f32daa8cfe445516f54c1c41c",
+      "written_at_utc": "2026-05-28T07:51:41Z"
+    },
+    "train/events/2024-11.parquet": {
+      "rows": 127,
+      "sha256": "512ffc29f10d8b829a5c9e10ecfb61f9438c5ab08a2c660fe58d44d712ee709b",
+      "written_at_utc": "2026-05-28T08:11:25Z"
+    },
+    "train/events/2024-12.parquet": {
+      "rows": 103,
+      "sha256": "8ae3d3299fdff8b847d0207ca091050e1007231799eff55ba2809a29a1e69847",
+      "written_at_utc": "2026-05-28T08:18:06Z"
+    },
+    "train/events/2025-01.parquet": {
+      "rows": 157,
+      "sha256": "3b664fe8af67369c73f30e3117898df59a73e5297d381528028067befb99d11d",
+      "written_at_utc": "2026-05-28T08:28:08Z"
+    },
+    "train/events/2025-02.parquet": {
+      "rows": 165,
+      "sha256": "4a61e46b3d777c2c7054ececd2b5465768edf45c7cee90ece4e9b2da61869ed6",
+      "written_at_utc": "2026-05-28T08:38:28Z"
+    },
+    "train/events/2025-03.parquet": {
+      "rows": 132,
+      "sha256": "7e3a4fa3130a0d6f47e31adaf2699ec18380b3d5d58e049f01e8177aa4740cd2",
+      "written_at_utc": "2026-05-28T08:46:06Z"
+    },
+    "train/events/2025-04.parquet": {
+      "rows": 181,
+      "sha256": "25aa85532c8110fa90be2ed256567fcae1dff8d35b42d9672b0b0942f0c30142",
+      "written_at_utc": "2026-05-28T08:53:20Z"
+    },
+    "train/events/2025-05.parquet": {
+      "rows": 198,
+      "sha256": "91865e1e55c9d1b2b305aac1766951c4a372e6c2383873c0f8d8ace0b1a087aa",
+      "written_at_utc": "2026-05-28T09:03:51Z"
+    },
+    "train/events/2025-06.parquet": {
+      "rows": 85,
+      "sha256": "b5c6be86574f45c1f1dff89f52086366cd8263dd13c55ac0219ed159ba110102",
+      "written_at_utc": "2026-05-28T09:08:57Z"
+    },
+    "train/events/2025-07.parquet": {
+      "rows": 204,
+      "sha256": "e3e36884e637e5f8a912ae91d0d5e643d6bd54c235adea9d7d6f52bf75fc55fc",
+      "written_at_utc": "2026-05-28T09:20:06Z"
+    },
+    "train/events/2025-08.parquet": {
+      "rows": 206,
+      "sha256": "2c76d7e9020b251b176619454e067fbc895d92092f1b53ff1302e5e7c9685a2d",
+      "written_at_utc": "2026-05-28T09:34:31Z"
+    },
+    "train/events/2025-09.parquet": {
+      "rows": 184,
+      "sha256": "60f9c67afa1e4c4e57dc2e5539d66401d5d94900393088eb9afd950f617d102b",
+      "written_at_utc": "2026-05-28T09:46:43Z"
+    },
+    "train/iv/2024-01.parquet": {
+      "rows": 585,
+      "sha256": "f2be8892f1db899e8c5dcd2dd7384611ad56f53ff5966db010a35bd3e7fd6b2e",
+      "written_at_utc": "2026-05-28T11:43:19Z"
+    },
+    "train/iv/2024-02.parquet": {
+      "rows": 504,
+      "sha256": "3c1039f33af6f58a2dd0d337c7168eeb49ed436206f44abb5565194445ecb116",
+      "written_at_utc": "2026-05-28T11:43:45Z"
+    },
+    "train/iv/2024-03.parquet": {
+      "rows": 599,
+      "sha256": "d5cea34adacf356621e345e18c2abd26e2721a9437523b5a8f8c73757bd5477b",
+      "written_at_utc": "2026-05-28T11:44:12Z"
+    },
+    "train/iv/2024-04.parquet": {
+      "rows": 615,
+      "sha256": "50abae94ac8055798cf2349081995b917f970802bc17fafb6d259386832ee469",
+      "written_at_utc": "2026-05-28T11:44:42Z"
+    },
+    "train/iv/2024-05.parquet": {
+      "rows": 536,
+      "sha256": "34e0647827498b2d187173e0147611a2470487889dda1e8fbf07abc8887b694f",
+      "written_at_utc": "2026-05-28T11:45:10Z"
+    },
+    "train/iv/2024-06.parquet": {
+      "rows": 470,
+      "sha256": "f307b5615fbf09e70c5ffad53dd4c5052bdd02dd23096c26fd1983bae425a043",
+      "written_at_utc": "2026-05-28T11:45:36Z"
+    },
+    "train/iv/2024-07.parquet": {
+      "rows": 543,
+      "sha256": "a3e6300a47c71a5f10afa90a6db5378f729d64bcbceb8a8c08a967082c687000",
+      "written_at_utc": "2026-05-28T11:46:05Z"
+    },
+    "train/iv/2024-08.parquet": {
+      "rows": 129,
+      "sha256": "8779b76737936537fe53e9d7d712af5a6f90d5efd6ac2ee6bc249f3efa471ffd",
+      "written_at_utc": "2026-05-28T11:46:23Z"
+    },
+    "train/iv/2024-09.parquet": {
+      "rows": 157,
+      "sha256": "1fbe999b08ec275c77269894ab394a5f2737a605798f581b004154e1748dfbf2",
+      "written_at_utc": "2026-05-28T11:46:42Z"
+    },
+    "train/iv/2024-10.parquet": {
+      "rows": 157,
+      "sha256": "a202bab488507c17b59d23115d262709aba43a75c37f2d7c26f312b7b8994bf6",
+      "written_at_utc": "2026-05-28T11:47:00Z"
+    },
+    "train/iv/2024-11.parquet": {
+      "rows": 127,
+      "sha256": "3ada230ebde2866d4a9d6b962592121ba2af613f634d57f6476cb3d93928f97f",
+      "written_at_utc": "2026-05-28T11:47:18Z"
+    },
+    "train/iv/2024-12.parquet": {
+      "rows": 103,
+      "sha256": "75e840c4ad6a7837366201bb33f05b0459709387c26825dac5d9244f8e55d093",
+      "written_at_utc": "2026-05-28T11:47:36Z"
+    },
+    "train/iv/2025-01.parquet": {
+      "rows": 157,
+      "sha256": "10a17fbb1ee7137a4a6b4d52048c860752e4a0280cbbe2ee14b2fb00b30b0fe0",
+      "written_at_utc": "2026-05-28T11:47:54Z"
+    },
+    "train/iv/2025-02.parquet": {
+      "rows": 165,
+      "sha256": "73a9b137692920794ab76802967bcf4849dd1603bbea23fdf9597e9e0e813d39",
+      "written_at_utc": "2026-05-28T11:48:13Z"
+    },
+    "train/iv/2025-03.parquet": {
+      "rows": 132,
+      "sha256": "474fdcd03b07fe485ab3b1a7e65e146936b4b5c1dd701c52060540736bd1663d",
+      "written_at_utc": "2026-05-28T11:48:32Z"
+    },
+    "train/iv/2025-04.parquet": {
+      "rows": 181,
+      "sha256": "8dc57eff4d4a296d110348755470f9f17a6e95b4397e690044af3547941734b7",
+      "written_at_utc": "2026-05-28T11:48:51Z"
+    },
+    "train/iv/2025-05.parquet": {
+      "rows": 198,
+      "sha256": "7f41188fab6cc622a8c76d7d60e51076f31191a4d826e7c6dd3c0d745561d03c",
+      "written_at_utc": "2026-05-28T11:49:11Z"
+    },
+    "train/iv/2025-06.parquet": {
+      "rows": 85,
+      "sha256": "7ae3a8a16473949454f8063dd646f0de4352df099b03aecefb859482443bd805",
+      "written_at_utc": "2026-05-28T11:49:28Z"
+    },
+    "train/iv/2025-07.parquet": {
+      "rows": 204,
+      "sha256": "89805bb88b022abd9d45da039e6d4e46c4cc605b8b211be6e384083e76da4e9d",
+      "written_at_utc": "2026-05-28T11:49:47Z"
+    },
+    "train/iv/2025-08.parquet": {
+      "rows": 206,
+      "sha256": "50b4f6ef52653d733f7c8fba297533931854c26e0f7460782e877a2cc6d10451",
+      "written_at_utc": "2026-05-28T11:50:07Z"
+    },
+    "train/iv/2025-09.parquet": {
+      "rows": 184,
+      "sha256": "867791c63187927cde5e3065f85becb59d41712ed896ccca2fc1851d629d6430",
+      "written_at_utc": "2026-05-28T11:50:27Z"
     },
     "train/news/2024-01.parquet": {
       "rows": 2219,
@@ -629,6 +839,56 @@
       "rows": 16997,
       "sha256": "7035c0c0a17df76206d8980a2c4958083c916c83f6d56022c86310927dbf8827",
       "written_at_utc": "2026-05-27T14:48:07Z"
+    },
+    "validation/events/2025-10.parquet": {
+      "rows": 325,
+      "sha256": "193782da0b292dbe956df4bc0e932ec81be6f2c7c0d774ccae6404d77c1bdd88",
+      "written_at_utc": "2026-05-28T10:09:42Z"
+    },
+    "validation/events/2025-11.parquet": {
+      "rows": 241,
+      "sha256": "311762c75d55cbdd22a4d1309f6d12af3cf8cdf7ee98a3c641a094a81fd2f789",
+      "written_at_utc": "2026-05-28T10:23:04Z"
+    },
+    "validation/events/2025-12.parquet": {
+      "rows": 294,
+      "sha256": "7d6f32365dfe0c62e292f3090c2e9d6d486bbd0fe6e3bb4ea86422f0827c794e",
+      "written_at_utc": "2026-05-28T10:39:54Z"
+    },
+    "validation/events/2026-01.parquet": {
+      "rows": 317,
+      "sha256": "d57d3ad6d4e8b01bfd857118c7e69076ca3dc42c60e20c639c0664ddba3b8e26",
+      "written_at_utc": "2026-05-28T10:55:51Z"
+    },
+    "validation/events/2026-02.parquet": {
+      "rows": 173,
+      "sha256": "3cf5c5fa442e1edb1e998020876651a95b8df06aff7f643af1d718a6d18c776d",
+      "written_at_utc": "2026-05-28T11:12:37Z"
+    },
+    "validation/iv/2025-10.parquet": {
+      "rows": 325,
+      "sha256": "fe15942be41c92936934969d8b04e6bdeaf75901be82cb074ac8584b8eeb49ca",
+      "written_at_utc": "2026-05-28T11:50:49Z"
+    },
+    "validation/iv/2025-11.parquet": {
+      "rows": 241,
+      "sha256": "501a3b26d5e141d1cfb3a752c3ea7b460a05fd8573be4e884a62e1c36dc66879",
+      "written_at_utc": "2026-05-28T11:51:10Z"
+    },
+    "validation/iv/2025-12.parquet": {
+      "rows": 294,
+      "sha256": "1fd6cb4ee80b612563b96177f4ed9800ca024ecb3990b3c10ca89a4dc7afa394",
+      "written_at_utc": "2026-05-28T11:51:31Z"
+    },
+    "validation/iv/2026-01.parquet": {
+      "rows": 317,
+      "sha256": "170cb8e73dbacd7a7ee9136b88f9e821068aa1f55073c2f026833965f153ff70",
+      "written_at_utc": "2026-05-28T11:51:54Z"
+    },
+    "validation/iv/2026-02.parquet": {
+      "rows": 173,
+      "sha256": "48a411a03124196f64b23be7461ab63b28510e33e95bfd7d8482f927e8e5cf26",
+      "written_at_utc": "2026-05-28T11:52:15Z"
     },
     "validation/news/2025-10.parquet": {
       "rows": 1222,

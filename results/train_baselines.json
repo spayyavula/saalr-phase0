@@ -1,0 +1,7 @@
+{
+  "n_train_events": 5786,
+  "b1_persistence_ic": 0.0934329551037266,
+  "b2_random_ic": -0.01282633730530801,
+  "b3_prior_day_same_time_ic": -0.018232447152018834,
+  "strongest_ic": 0.0934329551037266
+}
