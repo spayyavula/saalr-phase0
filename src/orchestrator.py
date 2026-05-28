@@ -383,8 +383,8 @@ STAGES: list[tuple[str, StageFn]] = [
     )),
     ("match_events", _stub_stage(
         "match_events",
-        "not yet implemented; joins news → IV(t) → IV(t+30) into the events frame "
-        "that evaluate_primary expects",
+        "not yet implemented; joins news -> IV(t) -> IV(t+30) into the events "
+        "frame that evaluate_primary expects",
     )),
     ("fit_baselines", _stub_stage(
         "fit_baselines",
@@ -513,6 +513,13 @@ def cmd_stages(_repo_root: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # Force UTF-8 on stdout so non-ASCII content in a status note or log
+    # message doesn't crash the process on Windows consoles that default
+    # to cp1252. Applies to every subcommand.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("run")

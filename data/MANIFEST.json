@@ -1,5 +1,15 @@
 {
   "files": {
+    "holdout/news/2026-03.parquet": {
+      "rows": 1141,
+      "sha256": "093aa021a3f30b5b6de8236aba383a5e55d02c290c8d72e3c8d2d40339b63831",
+      "written_at_utc": "2026-05-27T15:50:30Z"
+    },
+    "holdout/news/2026-04.parquet": {
+      "rows": 1116,
+      "sha256": "b0a980775ef5db1c57740217c1fa1dd94702656ec8bc27338e6805d2195ef4b3",
+      "written_at_utc": "2026-05-27T15:51:18Z"
+    },
     "holdout/risk_free/2026-03.parquet": {
       "rows": 22,
       "sha256": "13f68b3c06cdb16d89ec0fa169c1e98396806d3ffba74ce06405135861bc5825",
@@ -9,6 +19,16 @@
       "rows": 22,
       "sha256": "4b37af4917963bf39b5ab5ebed5246c1c11838db4df1de14799edb273ada3750",
       "written_at_utc": "2026-05-27T14:39:40Z"
+    },
+    "holdout/sentiment/2026-03.parquet": {
+      "rows": 1141,
+      "sha256": "15f0dbabf730bb666ef1fb06b8d382600277de0c2b2fbe32cd35b5ee9bb1e809",
+      "written_at_utc": "2026-05-27T20:16:07Z"
+    },
+    "holdout/sentiment/2026-04.parquet": {
+      "rows": 1116,
+      "sha256": "da18519d9449f6c86f4a6599184b78f1b6125991a522739782e0dee964b7dc72",
+      "written_at_utc": "2026-05-27T20:23:31Z"
     },
     "holdout/underlying/2026-03.parquet": {
       "rows": 20710,
@@ -59,6 +79,71 @@
       "rows": 651,
       "sha256": "c340e12e89b2ab430b0e8b0911b795d48e27a5a5ab3e2013cd212e86c1c01183",
       "written_at_utc": "2026-05-27T15:36:53Z"
+    },
+    "train/news/2024-09.parquet": {
+      "rows": 775,
+      "sha256": "cd58d441a4224bb5b61d16bf7f500ae2429e0ce1a0c6ea03f25d422f73c4ad51",
+      "written_at_utc": "2026-05-27T15:37:32Z"
+    },
+    "train/news/2024-10.parquet": {
+      "rows": 751,
+      "sha256": "c3680261641a95849d0e0236e3cb661e7c67c41908242c5c1ba5eb75cb00b306",
+      "written_at_utc": "2026-05-27T15:38:17Z"
+    },
+    "train/news/2024-11.parquet": {
+      "rows": 680,
+      "sha256": "b67f15369ed31b47a538dae4799aa4d457edfaafd421d04ca9be3f6449a37f3d",
+      "written_at_utc": "2026-05-27T15:38:59Z"
+    },
+    "train/news/2024-12.parquet": {
+      "rows": 627,
+      "sha256": "97b29d4f77388e74af5612e1870cc77b34ddeae6e915d0052e16216309f5bbb8",
+      "written_at_utc": "2026-05-27T15:39:34Z"
+    },
+    "train/news/2025-01.parquet": {
+      "rows": 830,
+      "sha256": "38a526f5f336519d780eb6341f2395a45325f80000679ae0005dcd9b4c4d7478",
+      "written_at_utc": "2026-05-27T15:40:24Z"
+    },
+    "train/news/2025-02.parquet": {
+      "rows": 716,
+      "sha256": "cf4d940b668d98c1b85ce1b23b5af05058a0bebfc66c3ca9dd39fb6078ae7d67",
+      "written_at_utc": "2026-05-27T15:41:18Z"
+    },
+    "train/news/2025-03.parquet": {
+      "rows": 692,
+      "sha256": "ecdacab822a5c6bb337af00f6ae0e7e4dc34adf9db89ac44c4c753b6855fec20",
+      "written_at_utc": "2026-05-27T15:41:53Z"
+    },
+    "train/news/2025-04.parquet": {
+      "rows": 745,
+      "sha256": "8ae878da83057966fa338c6356d65adf197083e6d8f8e7c070f2051eae286388",
+      "written_at_utc": "2026-05-27T15:42:36Z"
+    },
+    "train/news/2025-05.parquet": {
+      "rows": 686,
+      "sha256": "db2efa7aa0cec08ecaaaccd21491bd9db7f055fa7b8f1bb2413a5b1c5d65fa82",
+      "written_at_utc": "2026-05-27T15:43:16Z"
+    },
+    "train/news/2025-06.parquet": {
+      "rows": 563,
+      "sha256": "d0b1903f9a7968c84782b5fe1c7fdb41862b3a89f9a620b7852a991deac000c2",
+      "written_at_utc": "2026-05-27T15:43:59Z"
+    },
+    "train/news/2025-07.parquet": {
+      "rows": 867,
+      "sha256": "4ea8b93620de0a188a7e23f89b8c299e74de32597f09a13e42950f051acd5285",
+      "written_at_utc": "2026-05-27T15:44:47Z"
+    },
+    "train/news/2025-08.parquet": {
+      "rows": 883,
+      "sha256": "b6db86eb7208414cf3e88264a67e3ea7193ecdb78ddb9c6e85ca166daef5e4a9",
+      "written_at_utc": "2026-05-27T15:45:21Z"
+    },
+    "train/news/2025-09.parquet": {
+      "rows": 835,
+      "sha256": "e09187735288fd20d2dd37d42a6419d7f8b8aa812ae8b58a9df5f8fdb53e240d",
+      "written_at_utc": "2026-05-27T15:46:10Z"
     },
     "train/risk_free/2024-01.parquet": {
       "rows": 22,
@@ -170,6 +255,106 @@
       "sha256": "ac7e3cde4891c29929791b4777cbe34a9f9ddd89a52f95348a02c1c2d2e7d6fe",
       "written_at_utc": "2026-05-27T15:31:53Z"
     },
+    "train/sentiment/2024-02.parquet": {
+      "rows": 2036,
+      "sha256": "b3cf62508ad0fb2d5c5aedf2e245e4f5265d4e4e76314f1d59cc1e9e39c066f6",
+      "written_at_utc": "2026-05-27T16:18:00Z"
+    },
+    "train/sentiment/2024-03.parquet": {
+      "rows": 2186,
+      "sha256": "0aa407e032c513b27bd41e73ffdeccd17a77a75b714bfdfff27e2b750be50547",
+      "written_at_utc": "2026-05-27T16:51:44Z"
+    },
+    "train/sentiment/2024-04.parquet": {
+      "rows": 2013,
+      "sha256": "9d0de4c4b6dcbce6b93cc2aefd9989407016d62f52732b8414e9f5039c3d28c8",
+      "written_at_utc": "2026-05-27T17:44:59Z"
+    },
+    "train/sentiment/2024-05.parquet": {
+      "rows": 1812,
+      "sha256": "b80e131b70d4c14bf5925d9dd161f2c466d0b26c62d11a03b3e31679b09ccfca",
+      "written_at_utc": "2026-05-27T18:14:22Z"
+    },
+    "train/sentiment/2024-06.parquet": {
+      "rows": 1739,
+      "sha256": "6bdae404e70a2611d9e4aa5d4acaafbd10b12a4946f285da3d2dddea2ef61f48",
+      "written_at_utc": "2026-05-27T18:36:48Z"
+    },
+    "train/sentiment/2024-07.parquet": {
+      "rows": 2325,
+      "sha256": "88702e27814af7799bfee2f9a79cccae49cf790f0b01e54de3e1aee6039f3a5e",
+      "written_at_utc": "2026-05-27T18:48:19Z"
+    },
+    "train/sentiment/2024-08.parquet": {
+      "rows": 651,
+      "sha256": "4dd4363d2c8fec241bcfc3c52a6f39f468bd560f93a04fe98e436fd69a3cdb72",
+      "written_at_utc": "2026-05-27T18:51:42Z"
+    },
+    "train/sentiment/2024-09.parquet": {
+      "rows": 775,
+      "sha256": "d7853fc0a324a8e8f7e43bb7a0f8c23263dd445737a32d321431a4db1c62f437",
+      "written_at_utc": "2026-05-27T18:55:32Z"
+    },
+    "train/sentiment/2024-10.parquet": {
+      "rows": 751,
+      "sha256": "94b7cade8e23fc9c28949a61f3c02f90ee8990a11cea6b98d6b996e6230bf8c7",
+      "written_at_utc": "2026-05-27T18:59:14Z"
+    },
+    "train/sentiment/2024-11.parquet": {
+      "rows": 680,
+      "sha256": "d78fcc9e3c279136b44813384e826bfe899fa12bd4e2cc543883e5a4a10e9ba0",
+      "written_at_utc": "2026-05-27T19:02:49Z"
+    },
+    "train/sentiment/2024-12.parquet": {
+      "rows": 627,
+      "sha256": "16bfab4f40a589fc737787b21a9960e288e3d01338b8746bb6da854e8239a14c",
+      "written_at_utc": "2026-05-27T19:06:22Z"
+    },
+    "train/sentiment/2025-01.parquet": {
+      "rows": 830,
+      "sha256": "cdd4b8d2dcf5b1275974c64a922d4cf5fecafe85f24839dc57a9c7c8a64eace9",
+      "written_at_utc": "2026-05-27T19:10:17Z"
+    },
+    "train/sentiment/2025-02.parquet": {
+      "rows": 716,
+      "sha256": "075f3b1fdd822312e4ea4caef429aca8dda84aca732fbfb721f3aee5bdd587ec",
+      "written_at_utc": "2026-05-27T19:14:00Z"
+    },
+    "train/sentiment/2025-03.parquet": {
+      "rows": 692,
+      "sha256": "988fdcb27bcd56abb54099dc26b99eff5073d25e6a0aabb08ad3e97a91126a64",
+      "written_at_utc": "2026-05-27T19:17:38Z"
+    },
+    "train/sentiment/2025-04.parquet": {
+      "rows": 745,
+      "sha256": "fde7c7dd373b72263631899519260414d1ef01dec5accbeb99f55826dea6cf76",
+      "written_at_utc": "2026-05-27T19:21:26Z"
+    },
+    "train/sentiment/2025-05.parquet": {
+      "rows": 686,
+      "sha256": "56a34cb7fd15ddba4a3ce8634f29fa0872dbfb95badb73198fb7e39f9e4597ba",
+      "written_at_utc": "2026-05-27T19:25:01Z"
+    },
+    "train/sentiment/2025-06.parquet": {
+      "rows": 563,
+      "sha256": "fa802501ca82b70d0696d3580313e9f4022d4ab3dde5bee69e600a329c5ba56b",
+      "written_at_utc": "2026-05-27T19:28:16Z"
+    },
+    "train/sentiment/2025-07.parquet": {
+      "rows": 867,
+      "sha256": "4e2842ea1a452618e1241be2c5d06d70b24cf8fd2b46dc6ca86c0cfeccbdf168",
+      "written_at_utc": "2026-05-27T19:31:55Z"
+    },
+    "train/sentiment/2025-08.parquet": {
+      "rows": 883,
+      "sha256": "3ce63ba4e51a6fe0d8c7d696aa8c120298d76f7e8ca031454a00399d15a04b99",
+      "written_at_utc": "2026-05-27T19:35:33Z"
+    },
+    "train/sentiment/2025-09.parquet": {
+      "rows": 835,
+      "sha256": "73d723626d6cd1b08d5030a7e542afa4466c6de5079830e8022ee8618877075e",
+      "written_at_utc": "2026-05-27T19:39:10Z"
+    },
     "train/underlying/2024-01.parquet": {
       "rows": 16639,
       "sha256": "e591339db5d6bdb394922c92edcfca231975a0ad8877833a92c95d5ac752dc5e",
@@ -275,6 +460,31 @@
       "sha256": "7035c0c0a17df76206d8980a2c4958083c916c83f6d56022c86310927dbf8827",
       "written_at_utc": "2026-05-27T14:48:07Z"
     },
+    "validation/news/2025-10.parquet": {
+      "rows": 1222,
+      "sha256": "0e9d24eca5228698a323487c92c2d5e107caa22e4a082845a05dc5c4a6011437",
+      "written_at_utc": "2026-05-27T15:47:01Z"
+    },
+    "validation/news/2025-11.parquet": {
+      "rows": 1027,
+      "sha256": "0f117a161593df88cd7b122dcbcfe0c8ae96407198ff39cd3aef3224a987660f",
+      "written_at_utc": "2026-05-27T15:47:39Z"
+    },
+    "validation/news/2025-12.parquet": {
+      "rows": 1021,
+      "sha256": "76c6486b6641b4c2c0d29868c21588f205b27beaff04472e84309cddbeb7cd89",
+      "written_at_utc": "2026-05-27T15:48:13Z"
+    },
+    "validation/news/2026-01.parquet": {
+      "rows": 1174,
+      "sha256": "a0ae97d0aa8677e0479e6019b869c4050c9d1bf80e37eaf85574f3aa2af8058c",
+      "written_at_utc": "2026-05-27T15:48:48Z"
+    },
+    "validation/news/2026-02.parquet": {
+      "rows": 1114,
+      "sha256": "2269ddad35af92689eed4b34115311ec673101ac487d54fcb53b80e47a7c4fef",
+      "written_at_utc": "2026-05-27T15:49:28Z"
+    },
     "validation/risk_free/2025-10.parquet": {
       "rows": 23,
       "sha256": "7aba5342cf482200f3c5d8c4aa4800a00390b0d290430291bd871f757d606f8d",
@@ -299,6 +509,31 @@
       "rows": 20,
       "sha256": "12939dcec056a6ac15c352cf02f05c8b1ce24426d21af24ff8b233f9bbe7fa31",
       "written_at_utc": "2026-05-27T14:39:09Z"
+    },
+    "validation/sentiment/2025-10.parquet": {
+      "rows": 1222,
+      "sha256": "7fb49fce7646e773d79a5413baf951c78fa30b020ff5cf116d0321a97d0da2ca",
+      "written_at_utc": "2026-05-27T19:43:32Z"
+    },
+    "validation/sentiment/2025-11.parquet": {
+      "rows": 1027,
+      "sha256": "dfa85aaddec8a2ce2856dc36504731cf74f05c8f39afb3be3832e2dca45fb135",
+      "written_at_utc": "2026-05-27T19:47:37Z"
+    },
+    "validation/sentiment/2025-12.parquet": {
+      "rows": 1021,
+      "sha256": "ee3e06746fa7b39327a4150ef3d48d6fb9079cbf3ac11c39e236ffd29304479d",
+      "written_at_utc": "2026-05-27T19:53:37Z"
+    },
+    "validation/sentiment/2026-01.parquet": {
+      "rows": 1174,
+      "sha256": "edd8c99529a850dbbe58cb488638c695deb17a8bf3c34d36361f882b83129669",
+      "written_at_utc": "2026-05-27T20:01:13Z"
+    },
+    "validation/sentiment/2026-02.parquet": {
+      "rows": 1114,
+      "sha256": "c7fb5df43ed90c20b8d3579b8b184509dc277855db4a91e85a9e3825e15e369f",
+      "written_at_utc": "2026-05-27T20:08:43Z"
     },
     "validation/underlying/2025-10.parquet": {
       "rows": 19317,
