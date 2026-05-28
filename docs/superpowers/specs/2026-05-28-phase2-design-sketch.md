@@ -114,6 +114,38 @@ set at pre-registration time, informed by Phase 0.
 
 ---
 
+## Regime control (pre-specified confound check)
+
+The one durable Phase 0 exploratory finding was that **intense sentiment
+co-occurs with high IV *level*** — most plausibly **regime co-movement**
+(macro-stress regimes drive both heavy/intense news and elevated vol),
+not news content. Phase 2 must therefore stress-test the core question:
+
+> Does the sentiment signal predict the outcome **within** a regime, or is
+> it merely a proxy for "we are in a high-vol regime"?
+
+**Method (pre-specified, academic).** Infer the regime with a model fixed
+*before any data look*: a Markov-switching / HMM state on returns+vol, a
+**MS-GARCH** variance-regime (a natural extension of the GARCH(1,1)
+already locked in §9b), or — simplest and most transparent — a
+**threshold on VIX level / term structure**. Note the literature caveat:
+inferring the *current* regime is feasible; *predicting* regime
+transitions ahead of time is not reliable, so the design uses regime as a
+**contemporaneous control**, not as a forecast input.
+
+**Test.** Compute the pooled IC's relationship to the outcome **partialling
+out / conditioning on** the regime (regime as a covariate, or the pooled
+IC re-computed within each regime bucket). If the signal **vanishes after
+conditioning on regime**, it was never news content — it was a regime tell,
+and that is a publishable negative finding about the signal's nature.
+
+**Discipline.** The regime model (which one, number of states, the
+conditioning variable) is itself pre-registered before any data look —
+otherwise "the signal works *in the high-vol regime*" is just
+subgroup-fishing with extra steps.
+
+---
+
 ## Data + reuse
 
 - **Frozen, reused:** the Phase 0 FinBERT sentiment pipeline (pinned, as in
@@ -154,6 +186,10 @@ set at pre-registration time, informed by Phase 0.
    including.
 8. Whether the (harder) generic-news anticipation question justifies a
    later Phase 3 with pre-publication / story-development data.
+9. **Regime model choice** — MS-GARCH vs HMM vs VIX-threshold, and the
+   number of states/buckets.
+10. **How regime enters** — covariate control vs within-regime
+    stratification — and the exact conditioning variable.
 
 ---
 
