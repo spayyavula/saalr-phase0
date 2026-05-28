@@ -3,8 +3,8 @@
 A resumable, restartable runner that walks the pipeline in order:
 
     backfill_risk_free → backfill_underlying → backfill_news
-                       → (backfill_options — deferred)
-                       → score_sentiment → compute_iv → match_events
+                       → backfill_options → score_sentiment
+                       → match_events → compute_iv
                        → fit_baselines → evaluate_validation
 
 Each stage is chunked by calendar month so a single iteration does a
@@ -535,17 +535,93 @@ def _stage_match_events() -> StageFn:
     return stage
 
 
+def _stage_compute_iv() -> StageFn:
+    """Black-Scholes IV inversion over each month's events frame.
+
+    Reads ``data/{split}/events/{month}.parquet`` (from match_events),
+    applies the frozen ``iv_surface`` inversion to produce ``signal``,
+    ``prior_iv_change``, ``forward_iv_change`` (the columns
+    ``evaluate_primary`` consumes), and writes
+    ``data/{split}/iv/{month}.parquet``. Pure CPU; gated on match_events
+    being complete for the month."""
+
+    def stage(state: dict, repo_root: Path) -> StageOutcome:
+        stage_state = _stage_state(state, "compute_iv")
+        chunks = stage_state["chunks"]
+        events_chunks = (
+            state.get("stages", {}).get("match_events", {}).get("chunks", {})
+        )
+
+        for month in _all_locked_months():
+            if chunks.get(month, {}).get("status") == "complete":
+                continue
+            if events_chunks.get(month, {}).get("status") != "complete":
+                continue
+
+            try:
+                from src import storage  # lazy
+                from src.compute_iv import compute_iv_for_events
+
+                data_root = repo_root / "data"
+                events_df = storage.read_month_across_splits(data_root, "events", month)
+                if events_df.empty:
+                    chunks[month] = {
+                        "status": "complete",
+                        "rows": 0,
+                        "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                        "note": "no events for this month",
+                    }
+                    stage_state["status"] = "in_progress"
+                    return StageOutcome(
+                        did_work=True, message=f"compute_iv {month} (no events)"
+                    )
+
+                iv_df = compute_iv_for_events(events_df)
+                rows = int(getattr(iv_df, "shape", (0,))[0])
+                usable = (
+                    int(iv_df["forward_iv_change"].notna().sum()) if rows > 0 else 0
+                )
+                if rows > 0:
+                    storage.write_partitioned_parquet(iv_df, data_root, "iv")
+                chunks[month] = {
+                    "status": "complete",
+                    "rows": rows,
+                    "usable_forward_iv": usable,
+                    "completed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True,
+                    message=f"compute_iv {month} rows={rows} usable_fwd={usable}",
+                )
+            except Exception as exc:  # noqa: BLE001
+                logger.error("compute_iv %s failed: %s", month, exc)
+                logger.debug("%s", traceback.format_exc())
+                chunks[month] = {
+                    "status": "failed",
+                    "error": str(exc),
+                    "failed_at_utc": datetime.utcnow().isoformat(timespec="seconds") + "Z",
+                }
+                stage_state["status"] = "in_progress"
+                return StageOutcome(
+                    did_work=True, message=f"compute_iv {month} FAILED: {exc}"
+                )
+
+        if state.get("stages", {}).get("match_events", {}).get("status") == "complete":
+            stage_state["status"] = "complete"
+        return StageOutcome(did_work=False)
+
+    return stage
+
+
 STAGES: list[tuple[str, StageFn]] = [
     ("backfill_risk_free", _stage_backfill_risk_free()),
     ("backfill_underlying", _stage_backfill_underlying()),
     ("backfill_news", _stage_backfill_news()),
     ("backfill_options", _stage_backfill_options()),
     ("score_sentiment", _stage_score_sentiment()),
-    ("compute_iv", _stub_stage(
-        "compute_iv",
-        "not yet implemented; will live in src/iv_surface.py (Black-Scholes inversion)",
-    )),
     ("match_events", _stage_match_events()),
+    ("compute_iv", _stage_compute_iv()),
     ("fit_baselines", _stub_stage(
         "fit_baselines",
         "not yet implemented; runs src.baselines.compute_all_baselines on the "

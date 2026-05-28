@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import logging
 import os
+import random
 import time
 from datetime import date, datetime, time as dtime, timedelta, timezone
 from typing import Iterator, Optional
@@ -36,10 +37,37 @@ from src.locked_spec import SPEC
 logger = logging.getLogger(__name__)
 
 
+def _is_transient_quote_error(exc: Exception) -> bool:
+    """True for vendor/network failures worth retrying (502/503/504,
+    connection resets, timeouts, rate-limit blips). False for programming
+    errors, which should surface rather than be masked as a missing quote."""
+    import urllib3.exceptions
+
+    if isinstance(exc, (urllib3.exceptions.HTTPError, ConnectionError, TimeoutError, OSError)):
+        return True
+    try:
+        from polygon.exceptions import BadResponse
+
+        if isinstance(exc, BadResponse):
+            return True
+    except ImportError:
+        pass
+    # The polygon client wraps urllib3 MaxRetryError; the message reliably
+    # carries these markers even when the surfaced type is generic.
+    msg = str(exc).lower()
+    return any(
+        marker in msg
+        for marker in ("max retries", "502", "503", "504", "timed out",
+                       "timeout", "connection", "too many")
+    )
+
+
 INGEST_STRIKE_HALF_WIDTH: float = 25.0
 MID_QUOTE_WINDOW_SECONDS: int = 30
 EXPIRIES_PER_TRADING_DAY: int = 2
 INTER_CALL_SLEEP_SECONDS: float = 0.2
+QUOTE_RETRY_ATTEMPTS: int = 3
+QUOTE_RETRY_SLEEP_SECONDS: float = 5.0
 _ET = ZoneInfo("America/New_York")
 _RTH_OPEN_ET = dtime(9, 30)
 _RTH_CLOSE_ET = dtime(16, 0)
@@ -136,26 +164,51 @@ def fetch_option_mid_quote_at(
     sample_ns = int(sample_time.timestamp() * 1_000_000_000)
     lo_ns = sample_ns - window_seconds * 1_000_000_000
 
-    quotes = _client().list_quotes(
-        ticker=occ_ticker,
-        timestamp_gte=lo_ns,
-        timestamp_lte=sample_ns,
-        limit=limit,
-        sort="timestamp",
-        order="desc",
-    )
-
     chosen: tuple[int, float, float] | None = None
-    for q in quotes:
-        ts = getattr(q, "sip_timestamp", None) or getattr(q, "participant_timestamp", None)
-        if ts is None or ts > sample_ns:
-            continue
-        bid = getattr(q, "bid_price", None)
-        ask = getattr(q, "ask_price", None)
-        if bid is None or ask is None or bid <= 0 or ask <= 0 or ask < bid:
-            continue
-        chosen = (int(ts), float(bid), float(ask))
-        break
+    for attempt in range(QUOTE_RETRY_ATTEMPTS):
+        try:
+            quotes = _client().list_quotes(
+                ticker=occ_ticker,
+                timestamp_gte=lo_ns,
+                timestamp_lte=sample_ns,
+                limit=limit,
+                sort="timestamp",
+                order="desc",
+            )
+            chosen = None
+            for q in quotes:
+                ts = getattr(q, "sip_timestamp", None) or getattr(q, "participant_timestamp", None)
+                if ts is None or ts > sample_ns:
+                    continue
+                bid = getattr(q, "bid_price", None)
+                ask = getattr(q, "ask_price", None)
+                if bid is None or ask is None or bid <= 0 or ask <= 0 or ask < bid:
+                    continue
+                chosen = (int(ts), float(bid), float(ask))
+                break
+            break  # query + iteration succeeded (chosen may legitimately be None)
+        except Exception as exc:  # noqa: BLE001
+            # Transient vendor failures (502s, connection resets, timeouts,
+            # rate-limit blips) must NOT abort the caller's whole batch. Retry
+            # with backoff; on persistent failure return None — the caller
+            # treats that as a missing quote (auditable failure_reason), not a
+            # crash. A non-transient error (a real bug) is re-raised so it
+            # surfaces rather than being silently masked as a missing quote.
+            # See decisions/2026-05-28_quote-fetch-resilience.md.
+            if not _is_transient_quote_error(exc):
+                raise
+            if attempt == QUOTE_RETRY_ATTEMPTS - 1:
+                logger.warning(
+                    "quote fetch gave up for %s @ %s after %d attempt(s): %s",
+                    occ_ticker, sample_time.isoformat(), attempt + 1, exc,
+                )
+                return None
+            logger.info(
+                "transient quote error for %s (attempt %d/%d), retrying in %.1fs: %s",
+                occ_ticker, attempt + 1, QUOTE_RETRY_ATTEMPTS,
+                QUOTE_RETRY_SLEEP_SECONDS, exc,
+            )
+            time.sleep(QUOTE_RETRY_SLEEP_SECONDS + random.uniform(0, 0.25))
 
     if chosen is None:
         return None

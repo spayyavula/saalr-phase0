@@ -201,11 +201,14 @@ EVENTS_FRAME_COLUMNS: tuple[str, ...] = (
     "aggregated_signal",    # EWMA per SPEC.aggregation_lookback_hours/halflife
     "expiry",               # ISO date string, nearest weekly Friday
     "atm_strike",           # closest listed strike to spot_at_t
+    "spot_at_tminus30",
     "spot_at_t",
     "spot_at_t30",
     "rfr",                  # decimal, e.g. 0.0365
     "call_ticker",
     "put_ticker",
+    "call_mid_tminus30", "call_spread_pct_tminus30",
+    "put_mid_tminus30",  "put_spread_pct_tminus30",
     "call_mid_t", "call_spread_pct_t",
     "put_mid_t",  "put_spread_pct_t",
     "call_mid_t30", "call_spread_pct_t30",
@@ -242,25 +245,31 @@ def find_rfr_at_date(risk_free_df, d: date) -> Optional[float]:
 # ---------------------------------------------------------------------------
 
 
-def _pull_four_quotes(call_ticker, put_ticker, t_dt, t30_dt):
-    """Fetch the four mid-quotes (call/put at t and t30) concurrently.
+def _pull_six_quotes(call_ticker, put_ticker, tminus30_dt, t_dt, t30_dt):
+    """Fetch the six mid-quotes (call/put at t-30, t, t+30) concurrently.
 
-    The calls are independent and network-bound, so a 4-worker thread
-    pool collapses ~4 sequential round-trips into ~1. ``_client()`` in
+    The calls are independent and network-bound, so a 6-worker thread
+    pool collapses ~6 sequential round-trips into ~1. ``_client()`` in
     ``src.options`` builds a fresh ``RESTClient`` per call, so each
     thread gets its own client — no shared mutable state.
+
+    The t-30 pair is best-effort (events early in the session have no
+    pre-open quote); callers must treat a ``None`` t-30 result as a
+    null prior sample, not a failure.
     """
     from concurrent.futures import ThreadPoolExecutor
 
     from src.options import fetch_option_mid_quote_at
 
     specs = {
+        ("call", "tminus30"): (call_ticker, tminus30_dt),
+        ("put", "tminus30"): (put_ticker, tminus30_dt),
         ("call", "t"): (call_ticker, t_dt),
         ("put", "t"): (put_ticker, t_dt),
         ("call", "t30"): (call_ticker, t30_dt),
         ("put", "t30"): (put_ticker, t30_dt),
     }
-    with ThreadPoolExecutor(max_workers=4) as pool:
+    with ThreadPoolExecutor(max_workers=6) as pool:
         futures = {
             key: pool.submit(fetch_option_mid_quote_at, ticker, when)
             for key, (ticker, when) in specs.items()
@@ -301,6 +310,104 @@ def _build_contract_lookups(options_df):
         strikes_by_de[key].sort()
 
     return ticker_by_key, strikes_by_de
+
+
+def _empty_row(article_id, t, et_d, raw_score, signal, failure_reason):
+    """A row with metadata populated and all market columns null."""
+    row = {c: None for c in EVENTS_FRAME_COLUMNS}
+    row.update({
+        "article_id": article_id,
+        "timestamp": t,
+        "event_date_et": et_d.isoformat(),
+        "sentiment_score": raw_score,
+        "aggregated_signal": signal,
+        "passes_spread_filter": False,
+        "failure_reason": failure_reason,
+    })
+    return row
+
+
+def _build_one_event_row(
+    t, et_d, article_id, raw_score, signal,
+    underlying_df, risk_free_df, strikes_by_de, ticker_by_key,
+    forward_horizon_minutes, inter_call_sleep_seconds,
+):
+    """Build one event row (success or with a failure_reason). Pulls the six
+    mid-quotes. Raises only on genuinely unexpected errors — transient quote
+    failures are absorbed by fetch_option_mid_quote_at (returns None)."""
+    t_dt = t.to_pydatetime()
+    t30 = t_dt + timedelta(minutes=forward_horizon_minutes)
+    tminus30 = t_dt - timedelta(minutes=forward_horizon_minutes)
+
+    row = _empty_row(article_id, t, et_d, raw_score, signal, "")
+
+    spot_t = find_spot_at_minute(underlying_df, t_dt)
+    spot_t30 = find_spot_at_minute(underlying_df, t30)
+    rfr = find_rfr_at_date(risk_free_df, et_d)
+    row["spot_at_tminus30"] = find_spot_at_minute(underlying_df, tminus30)
+    row["spot_at_t"] = spot_t
+    row["spot_at_t30"] = spot_t30
+    row["rfr"] = rfr
+
+    if spot_t is None:
+        row["failure_reason"] = "no_underlying_at_t"
+        return row
+    if spot_t30 is None:
+        row["failure_reason"] = "no_underlying_at_t30"
+        return row
+    if rfr is None:
+        row["failure_reason"] = "no_rfr_for_date"
+        return row
+
+    expiry = nearest_weekly_friday(et_d)
+    row["expiry"] = expiry.isoformat()
+    available = strikes_by_de.get((et_d, expiry.isoformat()))
+    atm = pick_atm_strike(spot_t, available) if available else None
+    if atm is None:
+        row["failure_reason"] = "no_atm_contract_for_expiry"
+        return row
+    row["atm_strike"] = atm
+
+    call_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "call"))
+    put_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "put"))
+    row["call_ticker"] = call_ticker
+    row["put_ticker"] = put_ticker
+    if call_ticker is None or put_ticker is None:
+        row["failure_reason"] = "missing_call_or_put_leg"
+        return row
+
+    quotes = _pull_six_quotes(call_ticker, put_ticker, tminus30, t_dt, t30)
+    if inter_call_sleep_seconds:
+        import time as _time
+        _time.sleep(inter_call_sleep_seconds)
+
+    for when in ("tminus30", "t", "t30"):
+        for leg in ("call", "put"):
+            q = quotes.get((leg, when))
+            row[f"{leg}_mid_{when}"] = q["mid"] if q else None
+            row[f"{leg}_spread_pct_{when}"] = q["spread_pct_of_mid"] if q else None
+
+    # Only t and t30 are REQUIRED (they define forward_iv_change, the
+    # target). t-30 is best-effort: a missing pre-open prior quote just
+    # nulls prior_iv_change, which B1 drops, while the event still counts
+    # for the primary IC.
+    required_missing = sorted(
+        f"{leg}_{when}"
+        for (leg, when), q in quotes.items()
+        if q is None and when in ("t", "t30")
+    )
+    if required_missing:
+        row["failure_reason"] = "no_quote_" + ",".join(required_missing)
+        return row
+
+    spreads = [
+        row["call_spread_pct_t"], row["put_spread_pct_t"],
+        row["call_spread_pct_t30"], row["put_spread_pct_t30"],
+    ]
+    row["passes_spread_filter"] = all(
+        s is not None and s <= SPEC.options_max_spread_pct_of_mid for s in spreads
+    )
+    return row
 
 
 def build_events_frame_for_month(
@@ -376,92 +483,21 @@ def build_events_frame_for_month(
         article_id = sentiment_df.iloc[i].get("id")
         raw_score = float(sentiment_df.iloc[i]["sentiment_score"])
         signal = compute_aggregated_signal(article_times, article_scores, t.to_pydatetime())
-        t30 = t.to_pydatetime() + timedelta(minutes=forward_horizon_minutes)
 
-        row = {
-            "article_id": article_id,
-            "timestamp": t,
-            "event_date_et": et_d.isoformat(),
-            "sentiment_score": raw_score,
-            "aggregated_signal": signal,
-            "expiry": None, "atm_strike": None,
-            "spot_at_t": None, "spot_at_t30": None, "rfr": None,
-            "call_ticker": None, "put_ticker": None,
-            "call_mid_t": None, "call_spread_pct_t": None,
-            "put_mid_t": None, "put_spread_pct_t": None,
-            "call_mid_t30": None, "call_spread_pct_t30": None,
-            "put_mid_t30": None, "put_spread_pct_t30": None,
-            "passes_spread_filter": False,
-            "failure_reason": "",
-        }
-
-        spot_t = find_spot_at_minute(underlying_df, t.to_pydatetime())
-        spot_t30 = find_spot_at_minute(underlying_df, t30)
-        rfr = find_rfr_at_date(risk_free_df, et_d)
-        row["spot_at_t"] = spot_t
-        row["spot_at_t30"] = spot_t30
-        row["rfr"] = rfr
-
-        if spot_t is None:
-            row["failure_reason"] = "no_underlying_at_t"
-            rows_out.append(row)
-            continue
-        if spot_t30 is None:
-            row["failure_reason"] = "no_underlying_at_t30"
-            rows_out.append(row)
-            continue
-        if rfr is None:
-            row["failure_reason"] = "no_rfr_for_date"
-            rows_out.append(row)
-            continue
-
-        expiry = nearest_weekly_friday(et_d)
-        row["expiry"] = expiry.isoformat()
-        de_key = (et_d, expiry.isoformat())
-        available = strikes_by_de.get(de_key)
-        atm = pick_atm_strike(spot_t, available) if available else None
-        if atm is None:
-            row["failure_reason"] = "no_atm_contract_for_expiry"
-            rows_out.append(row)
-            continue
-        row["atm_strike"] = atm
-
-        call_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "call"))
-        put_ticker = ticker_by_key.get((et_d, expiry.isoformat(), atm, "put"))
-        row["call_ticker"] = call_ticker
-        row["put_ticker"] = put_ticker
-        if call_ticker is None or put_ticker is None:
-            row["failure_reason"] = "missing_call_or_put_leg"
-            rows_out.append(row)
-            continue
-
-        quotes = _pull_four_quotes(call_ticker, put_ticker, t.to_pydatetime(), t30)
-        if inter_call_sleep_seconds:
-            import time as _time
-            _time.sleep(inter_call_sleep_seconds)
-
-        missing = [f"{leg}_{when}" for (leg, when), q in quotes.items() if q is None]
-        row["call_mid_t"] = quotes[("call", "t")]["mid"] if quotes[("call", "t")] else None
-        row["call_spread_pct_t"] = quotes[("call", "t")]["spread_pct_of_mid"] if quotes[("call", "t")] else None
-        row["put_mid_t"] = quotes[("put", "t")]["mid"] if quotes[("put", "t")] else None
-        row["put_spread_pct_t"] = quotes[("put", "t")]["spread_pct_of_mid"] if quotes[("put", "t")] else None
-        row["call_mid_t30"] = quotes[("call", "t30")]["mid"] if quotes[("call", "t30")] else None
-        row["call_spread_pct_t30"] = quotes[("call", "t30")]["spread_pct_of_mid"] if quotes[("call", "t30")] else None
-        row["put_mid_t30"] = quotes[("put", "t30")]["mid"] if quotes[("put", "t30")] else None
-        row["put_spread_pct_t30"] = quotes[("put", "t30")]["spread_pct_of_mid"] if quotes[("put", "t30")] else None
-
-        if missing:
-            row["failure_reason"] = "no_quote_" + ",".join(sorted(missing))
-            rows_out.append(row)
-            continue
-
-        spreads = [
-            row["call_spread_pct_t"], row["put_spread_pct_t"],
-            row["call_spread_pct_t30"], row["put_spread_pct_t30"],
-        ]
-        row["passes_spread_filter"] = all(
-            s is not None and s <= SPEC.options_max_spread_pct_of_mid for s in spreads
-        )
+        try:
+            row = _build_one_event_row(
+                t, et_d, article_id, raw_score, signal,
+                underlying_df, risk_free_df, strikes_by_de, ticker_by_key,
+                forward_horizon_minutes, inter_call_sleep_seconds,
+            )
+        except Exception as exc:  # noqa: BLE001
+            # One unexpected event failure must not abort the whole month's
+            # ~1,500 events. Record it structurally and move on.
+            logger.warning("event @ %s raised, recording as failure: %s", t, exc)
+            row = _empty_row(
+                article_id, t, et_d, raw_score, signal,
+                f"exception:{type(exc).__name__}",
+            )
         rows_out.append(row)
 
     if not rows_out:
