@@ -1,5 +1,10 @@
 {
   "files": {
+    "holdout/news/2026-02.parquet": {
+      "rows": 496,
+      "sha256": "2023e97347940cd6ef77eb54d55de9c5f441bea602a3d61328311772824b016d",
+      "written_at_utc": "2026-05-28T01:28:07Z"
+    },
     "holdout/news/2026-03.parquet": {
       "rows": 1141,
       "sha256": "093aa021a3f30b5b6de8236aba383a5e55d02c290c8d72e3c8d2d40339b63831",
@@ -9,6 +14,11 @@
       "rows": 1116,
       "sha256": "b0a980775ef5db1c57740217c1fa1dd94702656ec8bc27338e6805d2195ef4b3",
       "written_at_utc": "2026-05-27T15:51:18Z"
+    },
+    "holdout/risk_free/2026-02.parquet": {
+      "rows": 10,
+      "sha256": "2b8bcc93fb3060b0d6f0fac74aaa12fc0b869e9b8dd98e1b1cb4207fb43a63d7",
+      "written_at_utc": "2026-05-28T01:28:08Z"
     },
     "holdout/risk_free/2026-03.parquet": {
       "rows": 22,
@@ -20,6 +30,11 @@
       "sha256": "4b37af4917963bf39b5ab5ebed5246c1c11838db4df1de14799edb273ada3750",
       "written_at_utc": "2026-05-27T14:39:40Z"
     },
+    "holdout/sentiment/2026-02.parquet": {
+      "rows": 496,
+      "sha256": "142b6a5896b2ab99bc1fcfba8e71d19176d5f4f0beedeb9caef8d8b3fde67cd3",
+      "written_at_utc": "2026-05-28T01:28:08Z"
+    },
     "holdout/sentiment/2026-03.parquet": {
       "rows": 1141,
       "sha256": "15f0dbabf730bb666ef1fb06b8d382600277de0c2b2fbe32cd35b5ee9bb1e809",
@@ -29,6 +44,11 @@
       "rows": 1116,
       "sha256": "da18519d9449f6c86f4a6599184b78f1b6125991a522739782e0dee964b7dc72",
       "written_at_utc": "2026-05-27T20:23:31Z"
+    },
+    "holdout/underlying/2026-02.parquet": {
+      "rows": 8278,
+      "sha256": "d2d83357e8f2eaf476d08748cbae3242e5a4aa71e6d86172e3c3f06115560696",
+      "written_at_utc": "2026-05-28T01:28:08Z"
     },
     "holdout/underlying/2026-03.parquet": {
       "rows": 20710,
@@ -481,9 +501,9 @@
       "written_at_utc": "2026-05-27T15:48:48Z"
     },
     "validation/news/2026-02.parquet": {
-      "rows": 1114,
-      "sha256": "2269ddad35af92689eed4b34115311ec673101ac487d54fcb53b80e47a7c4fef",
-      "written_at_utc": "2026-05-27T15:49:28Z"
+      "rows": 618,
+      "sha256": "ebaa1183dd0e7f5a8850b66668b37ab6fe5f5088c1ac91f19702e1dc2ebd040d",
+      "written_at_utc": "2026-05-28T01:28:07Z"
     },
     "validation/risk_free/2025-10.parquet": {
       "rows": 23,
@@ -506,9 +526,9 @@
       "written_at_utc": "2026-05-27T14:38:53Z"
     },
     "validation/risk_free/2026-02.parquet": {
-      "rows": 20,
-      "sha256": "12939dcec056a6ac15c352cf02f05c8b1ce24426d21af24ff8b233f9bbe7fa31",
-      "written_at_utc": "2026-05-27T14:39:09Z"
+      "rows": 10,
+      "sha256": "9df1abf652a8341f0711b06955408fa27eed2a14fd0c3a87610891f4059cd896",
+      "written_at_utc": "2026-05-28T01:28:08Z"
     },
     "validation/sentiment/2025-10.parquet": {
       "rows": 1222,
@@ -531,9 +551,9 @@
       "written_at_utc": "2026-05-27T20:01:13Z"
     },
     "validation/sentiment/2026-02.parquet": {
-      "rows": 1114,
-      "sha256": "c7fb5df43ed90c20b8d3579b8b184509dc277855db4a91e85a9e3825e15e369f",
-      "written_at_utc": "2026-05-27T20:08:43Z"
+      "rows": 618,
+      "sha256": "62ad29c4d07848d800e471af7b591cc9d53d0f766f97ae09027f1f66419f4d62",
+      "written_at_utc": "2026-05-28T01:28:08Z"
     },
     "validation/underlying/2025-10.parquet": {
       "rows": 19317,
@@ -556,9 +576,9 @@
       "written_at_utc": "2026-05-27T15:05:34Z"
     },
     "validation/underlying/2026-02.parquet": {
-      "rows": 17569,
-      "sha256": "3c983a01d88f3bff25b9e78d3b018ebaf97c1158b1cef6253ea9856e805df5d7",
-      "written_at_utc": "2026-05-27T15:05:54Z"
+      "rows": 9291,
+      "sha256": "4acf67fb44f2293d72ffecd6de6dec9a6ff501ce878f521785f404d18c4b95ca",
+      "written_at_utc": "2026-05-28T01:28:08Z"
     }
   }
 }

@@ -89,18 +89,24 @@ def write_partitioned_parquet(
         return []
 
     ts = pd.to_datetime(df[timestamp_col], utc=True)
-    df = df.assign(_date=ts.dt.date, _year_month=ts.dt.strftime("%Y-%m"))
+    dates = ts.dt.date
+    df = df.assign(
+        _date=dates,
+        _year_month=ts.dt.strftime("%Y-%m"),
+        # Split per row so a mid-month boundary (e.g. SPEC's
+        # validation_end = 2026-02-15) routes the validation half and
+        # the holdout half to their correct destinations. Earlier
+        # versions inferred the split from the first row of each month
+        # and silently mis-routed February 2026.
+        _split=[split_for_date(d) for d in dates],
+    )
 
     results: list[WriteResult] = []
-    for (year_month,), group in df.groupby(["_year_month"]):
-        # All rows in a month share a split (each split aligns on month
-        # boundaries in SPEC — verified by tests/test_storage_split.py).
-        sample_date = group["_date"].iloc[0]
-        split = split_for_date(sample_date)
+    for (split, year_month), group in df.groupby(["_split", "_year_month"]):
         out_dir = data_root / split / source
         out_dir.mkdir(parents=True, exist_ok=True)
         out_path = out_dir / f"{year_month}.parquet"
-        group_clean = group.drop(columns=["_date", "_year_month"])
+        group_clean = group.drop(columns=["_date", "_year_month", "_split"])
         group_clean.to_parquet(out_path, index=False)
         sha = _sha256_of(out_path)
         results.append(WriteResult(out_path, len(group_clean), sha))
