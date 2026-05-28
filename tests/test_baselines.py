@@ -11,7 +11,12 @@ if importlib.util.find_spec("pandas") is None:
 import numpy as np
 import pandas as pd
 
-from src.baselines import b1_persistence, b2_random, compute_all_baselines
+from src.baselines import (
+    b1_persistence,
+    b2_random,
+    b3_prior_day_same_time,
+    compute_all_baselines,
+)
 
 
 def _synthetic_events(n: int = 2000, seed: int = 0) -> pd.DataFrame:
@@ -58,3 +63,22 @@ def test_compute_all_baselines_returns_three_independent_ics() -> None:
     assert results.b2_random.n > 0
     assert results.b3_prior_day_same_time.n >= 0  # may have NaNs from reindex
     assert results.strongest_ic >= 0
+
+
+def test_b3_handles_duplicate_timestamps_without_crashing() -> None:
+    # Multiple news items can land in the same clock minute; the prior-day
+    # join must not raise "cannot reindex on an axis with duplicate labels".
+    base = pd.date_range("2025-01-01 14:00", periods=50, freq="D", tz="UTC")
+    ts = base.append(base[:5])  # 5 same-minute duplicate timestamps
+    n = len(ts)
+    rng = np.random.default_rng(7)
+    events = pd.DataFrame(
+        {
+            "timestamp": ts,
+            "signal": rng.normal(size=n),
+            "forward_iv_change": rng.normal(size=n),
+            "prior_iv_change": rng.normal(size=n),
+        }
+    )
+    result = b3_prior_day_same_time(events)
+    assert result.n > 0  # daily spacing => prior-day matches exist

@@ -81,21 +81,29 @@ def b2_random(events: pd.DataFrame, *, seed: int = 42) -> ICResult:
 def b3_prior_day_same_time(events: pd.DataFrame) -> ICResult:
     """B3: at each event time t on day d, use the candidate signal at the
     same clock minute on day d−1. Events where no prior-day match exists
-    are dropped (not back-filled further)."""
-    if not isinstance(events.index, pd.DatetimeIndex):
-        df = events.set_index(pd.DatetimeIndex(events["timestamp"]))
-    else:
-        df = events
+    are dropped (not back-filled further).
 
-    target_signal = df["signal"].copy()
-    target_signal.index = target_signal.index + timedelta(days=1)
-    aligned = target_signal.reindex(df.index, method="nearest", tolerance=timedelta(minutes=1))
-    mask = ~aligned.isna()
+    Uses ``merge_asof`` rather than ``Series.reindex`` so that same-minute
+    duplicate event timestamps (multiple news items in one clock minute)
+    don't break the nearest-match join. For unique timestamps the result is
+    identical to a nearest reindex within the 1-minute tolerance.
+    """
+    ts = pd.DatetimeIndex(events["timestamp"])
+    left = pd.DataFrame(
+        {"t": ts, "forward_iv_change": events["forward_iv_change"].to_numpy()}
+    ).sort_values("t")
+    right = pd.DataFrame(
+        {"t": ts + timedelta(days=1), "prior_day_signal": events["signal"].to_numpy()}
+    ).sort_values("t")
+    aligned = pd.merge_asof(
+        left, right, on="t", direction="nearest", tolerance=timedelta(minutes=1)
+    )
+    mask = aligned["prior_day_signal"].notna()
     if not mask.any():
         return bootstrap_ic_ci([], [])
     return bootstrap_ic_ci(
-        aligned[mask].to_numpy(),
-        df["forward_iv_change"][mask].to_numpy(),
+        aligned["prior_day_signal"][mask].to_numpy(),
+        aligned["forward_iv_change"][mask].to_numpy(),
         seed=SPEC_RANDOM_SEED_B3,
     )
 
