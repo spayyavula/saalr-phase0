@@ -73,13 +73,22 @@ _RTH_OPEN_ET = dtime(9, 30)
 _RTH_CLOSE_ET = dtime(16, 0)
 
 
-def _client() -> RESTClient:
+def _client(retries: int = 3) -> RESTClient:
+    """Build a Polygon REST client.
+
+    ``retries`` maps to urllib3's ``Retry(total=...)`` and 502/503/504 are
+    in Polygon's status_forcelist, so a high value means each failing call
+    burns ~27 s of internal exponential backoff before raising. The quote
+    path passes ``retries=1`` so a genuinely-dead query fails fast and lets
+    ``fetch_option_mid_quote_at``'s own retry layer be the single source of
+    retry logic. See decisions/2026-05-28_quote-fetch-resilience.md.
+    """
     key = os.environ.get("MASSIVE_API_KEY") or os.environ.get("POLYGON_API_KEY")
     if not key:
         raise RuntimeError(
             "MASSIVE_API_KEY (or POLYGON_API_KEY) is not set; see .env.example"
         )
-    return RESTClient(api_key=key)
+    return RESTClient(api_key=key, retries=retries)
 
 
 def iter_weekly_fridays(start: date, end: date) -> Iterator[date]:
@@ -167,7 +176,7 @@ def fetch_option_mid_quote_at(
     chosen: tuple[int, float, float] | None = None
     for attempt in range(QUOTE_RETRY_ATTEMPTS):
         try:
-            quotes = _client().list_quotes(
+            quotes = _client(retries=1).list_quotes(
                 ticker=occ_ticker,
                 timestamp_gte=lo_ns,
                 timestamp_lte=sample_ns,
